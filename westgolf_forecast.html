@@ -203,12 +203,10 @@ async function nFetch(url,opts){
   const WORKER = "https://blue-unit-32c2.alaa020498.workers.dev";
   const r = await fetch(WORKER+"?url="+encodeURIComponent(url),{
     method: opts.method,
-    headers: opts.headers,
     body: opts.body,
   });
-  const text = await r.text();
-  try{ return JSON.parse(text); }
-  catch(e){ throw new Error("Bad response"); }
+  if(!r.ok) throw new Error("Worker error: "+r.status);
+  return r.json();
 }
 
 async function qAll(dbId){
