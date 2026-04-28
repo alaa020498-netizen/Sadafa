@@ -367,6 +367,101 @@ function nightsCalc() {
 }
 
 // ═══════════════════════════════════
+// DUPLICATE CHECK
+// ═══════════════════════════════════
+async function checkDuplicate(dbId, unit, ci, co) {
+  try {
+    const data = await notionQuery(dbId, {
+      filter: {
+        "and": [
+          { property: "Listing Name", select: { equals: unit } },
+          { property: "Check-in Date", date: { on_or_after: ci } },
+          { property: "Check-in Date", date: { before: co } },
+        ]
+      },
+      page_size: 5
+    });
+    if (data.results && data.results.length > 0) {
+      const p = data.results[0].properties;
+      return {
+        found: true,
+        ci:    p["Check-in Date"]?.date?.start  || "",
+        co:    p["Check-out Date"]?.date?.start || "",
+        guest: p["Guest Name"]?.rich_text?.[0]?.plain_text || "Unknown guest",
+      };
+    }
+  } catch(e) { /* silently ignore — don't block saving on check failure */ }
+  return { found: false };
+}
+
+function showDupWarning(unit, ci, co, guest) {
+  document.getElementById("dup-modal")?.remove();
+  const fmtD = iso => new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  const modal = document.createElement("div");
+  modal.id = "dup-modal";
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px";
+  modal.innerHTML = `
+    <div style="background:#1c1c1c;border:1px solid #e05c5c;border-radius:16px;padding:28px 24px;max-width:340px;width:100%;text-align:center">
+      <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:16px;font-weight:700;color:#f0ede8;margin-bottom:10px">Reservation Already Exists</div>
+      <div style="font-size:13px;color:#999;line-height:1.7;margin-bottom:22px">
+        <strong style="color:#f0ede8">${unit}</strong><br>
+        already has a booking from<br>
+        <strong style="color:#e8c97a">${fmtD(ci)}</strong> → <strong style="color:#e8c97a">${fmtD(co)}</strong><br>
+        Guest: <strong style="color:#f0ede8">${guest}</strong>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('dup-modal').remove()"
+          style="flex:1;padding:12px;border-radius:10px;border:1px solid #333;background:transparent;color:#999;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">
+          Cancel
+        </button>
+        <button onclick="forceSave()"
+          style="flex:1;padding:12px;border-radius:10px;border:none;background:#e05c5c;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
+          Save Anyway
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function forceSave() {
+  document.getElementById("dup-modal")?.remove();
+  const unit  = document.getElementById("f-unit").value;
+  const guest = document.getElementById("f-guest").value.trim();
+  const ci    = document.getElementById("f-ci").value;
+  const co    = document.getElementById("f-co").value;
+  const price = parseFloat(document.getElementById("f-price").value) || 0;
+  const monthName = new Date(ci+"T00:00:00").toLocaleString("en-US",{month:"long"});
+  const btn = document.getElementById("btn-save");
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const res = await notionCreate(MONTH_DBS[monthName], {
+      "Listing Name":   { select:    { name: unit } },
+      "Guest Name":     { rich_text: [{ text:{ content: guest } }] },
+      "Booking Source": { select:    { name: state.source } },
+      "Check-in Date":  { date:      { start: ci } },
+      "Check-out Date": { date:      { start: co } },
+      "Total Price":    { number:    price },
+      "Currency":       { select:    { name: state.currency } },
+    });
+    if (res.id) {
+      toast(`✓ Saved to ${monthName}`,"ok");
+      document.getElementById("f-unit").value = "";
+      document.getElementById("f-guest").value = "";
+      document.getElementById("f-price").value = "";
+      document.querySelectorAll(".btn-grid-4 .pick-btn").forEach(b => b.classList.remove("on"));
+      state.source = "";
+      const today = new Date();
+      const tmr = new Date(today); tmr.setDate(today.getDate()+1);
+      document.getElementById("f-ci").value = fmt(today);
+      document.getElementById("f-co").value = fmt(tmr);
+      nightsCalc(); unitsCache = null;
+    } else { toast(res.message || "Failed to save","err"); }
+  } catch(e) { toast("Network error","err"); }
+  btn.disabled = false; btn.textContent = "Save Reservation →";
+}
+
+// ═══════════════════════════════════
 // SAVE
 // ═══════════════════════════════════
 async function saveRes() {
@@ -385,8 +480,17 @@ async function saveRes() {
   if (!MONTH_DBS[monthName]) { toast(`${monthName} not configured yet`,"err"); return; }
 
   const btn = document.getElementById("btn-save");
-  btn.disabled = true; btn.textContent = "Saving…";
+  btn.disabled = true; btn.textContent = "Checking…";
 
+  // ── Duplicate check ──
+  const dup = await checkDuplicate(MONTH_DBS[monthName], unit, ci, co);
+  if (dup.found) {
+    btn.disabled = false; btn.textContent = "Save Reservation →";
+    showDupWarning(unit, dup.ci, dup.co, dup.guest);
+    return;
+  }
+
+  btn.textContent = "Saving…";
   try {
     const res = await notionCreate(MONTH_DBS[monthName], {
       "Listing Name":   { select:    { name: unit } },
@@ -410,7 +514,7 @@ async function saveRes() {
       document.getElementById("f-ci").value = fmt(today);
       document.getElementById("f-co").value = fmt(tmr);
       nightsCalc();
-      unitsCache = null; // clear cache so next open re-fetches fresh list
+      unitsCache = null;
     } else {
       toast(res.message || "Failed to save","err");
     }
