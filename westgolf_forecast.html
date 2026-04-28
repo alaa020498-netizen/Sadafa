@@ -200,34 +200,15 @@ const AMONTHS = Object.keys(MONTH_DBS);
 const UNIT = "Westgolf Y39-2-20";
 
 async function nFetch(url,opts){
-  const proxies=[
-    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u=>`https://thingproxy.freeboard.io/fetch/${u}`,
-  ];
-  let lastErr;
-  for(const p of proxies){
-    try{
-      const ctrl=new AbortController();
-      const tid=setTimeout(()=>ctrl.abort(),9000);
-      const r=await fetch(p(url),{method:opts.method,headers:opts.headers,body:opts.body,signal:ctrl.signal});
-      clearTimeout(tid);
-      const text=await r.text();
-      if(!text||!text.trim())continue;
-      let j=null;
-      try{
-        const parsed=JSON.parse(text);
-        // allorigins wraps: {contents:"...", status:{...}}
-        if(parsed && typeof parsed.contents==="string"){
-          try{j=JSON.parse(parsed.contents)}catch(e){j=parsed}
-        } else {
-          j=parsed;
-        }
-      }catch(e){continue}
-      if(j&&(j.object||Array.isArray(j.results)||j.id))return j;
-    }catch(e){lastErr=e;}
-  }
-  throw lastErr||new Error("All proxies failed");
+  const WORKER = "https://blue-unit-32c2.alaa020498.workers.dev";
+  const r = await fetch(WORKER+"?url="+encodeURIComponent(url),{
+    method: opts.method,
+    headers: opts.headers,
+    body: opts.body,
+  });
+  const text = await r.text();
+  try{ return JSON.parse(text); }
+  catch(e){ throw new Error("Bad response"); }
 }
 
 async function qAll(dbId){
