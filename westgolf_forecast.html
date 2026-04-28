@@ -199,22 +199,35 @@ const FMONTHS = ["May 2026","Jun 2026","Jul 2026","Aug 2026","Sep 2026","Nov 202
 const AMONTHS = Object.keys(MONTH_DBS);
 const UNIT = "Westgolf Y39-2-20";
 
-const PROXIES = [
-  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-];
-
 async function nFetch(url,opts){
-  let err;
-  for(const p of PROXIES){
+  const proxies=[
+    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
+  let lastErr;
+  for(const p of proxies){
     try{
-      const r=await fetch(p(url),{method:opts.method,headers:opts.headers,body:opts.body});
-      const t=await r.text();let j;
-      try{j=JSON.parse(t)}catch(e){continue}
-      if(j&&(j.object||j.results!==undefined||j.id))return j;
-    }catch(e){err=e}
+      const ctrl=new AbortController();
+      const tid=setTimeout(()=>ctrl.abort(),9000);
+      const r=await fetch(p(url),{method:opts.method,headers:opts.headers,body:opts.body,signal:ctrl.signal});
+      clearTimeout(tid);
+      const text=await r.text();
+      if(!text||!text.trim())continue;
+      let j=null;
+      try{
+        const parsed=JSON.parse(text);
+        // allorigins wraps: {contents:"...", status:{...}}
+        if(parsed && typeof parsed.contents==="string"){
+          try{j=JSON.parse(parsed.contents)}catch(e){j=parsed}
+        } else {
+          j=parsed;
+        }
+      }catch(e){continue}
+      if(j&&(j.object||Array.isArray(j.results)||j.id))return j;
+    }catch(e){lastErr=e;}
   }
-  throw err||new Error("Failed");
+  throw lastErr||new Error("All proxies failed");
 }
 
 async function qAll(dbId){
@@ -257,6 +270,29 @@ window.addEventListener("load",async()=>{
     }catch(e){allData[months[i]]=[];}
   }
   clearInterval(tick);
+  // Check if we got any data at all
+  const hasData = Object.values(allData).some(rows => rows.length > 0);
+  if(!hasData){
+    document.getElementById('lprog').textContent = 'Connection failed. Retrying...';
+    // Try once more after 2 seconds
+    setTimeout(async()=>{
+      for(let i=0;i<months.length;i++){
+        if((allData[months[i]]||[]).length===0){
+          try{
+            const rows=await qAll(MONTH_DBS[months[i]]);
+            allData[months[i]]=rows.map(parse).filter(r=>r.unit&&r.ci);
+          }catch(e){}
+        }
+      }
+      const hasData2=Object.values(allData).some(rows=>rows.length>0);
+      if(hasData2){render(allData);}
+      else{
+        document.querySelector('.load-msg').textContent='Could not load data';
+        document.getElementById('lprog').innerHTML='<span style="color:#e05c5c">Please check your internet connection and refresh the page</span>';
+      }
+    },2000);
+    return;
+  }
   render(allData);
 });
 
