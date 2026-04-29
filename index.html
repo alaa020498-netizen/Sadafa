@@ -286,7 +286,7 @@ const WORKER = "https://blue-unit-32c2.alaa020498.workers.dev";
 // Units are always fetched from the LAST configured month.
 const MONTH_DBS = {
   "April":      "b7dc90a9c0078392a77a0124767bd463",
-  "May":    "350c90a9c007818bbacbd1fa065d5091",
+  "May":        "350c90a9c007818bbacbd1fa065d5091",
   // "June":    "YOUR_JUNE_DATABASE_ID",
   // "July":    "YOUR_JULY_DATABASE_ID",
   // "August":  "YOUR_AUGUST_DATABASE_ID",
@@ -796,7 +796,8 @@ async function cancelRes() {
       method: "PATCH",
       body:   JSON.stringify({ archived: true }),
     });
-    const res = await r.json();
+    const text = await r.text();
+    let res; try{ res=JSON.parse(text); }catch(e){ res={}; }
     if (res.id || res.archived) {
       toast("✓ Reservation cancelled","ok");
       document.getElementById("res-found").style.display    = "none";
@@ -835,7 +836,8 @@ async function saveModify() {
         }
       }),
     });
-    const res = await r.json();
+    const text = await r.text();
+    let res; try{ res=JSON.parse(text); }catch(e){ res={}; }
     if (res.id) {
       toast("✓ Reservation updated","ok");
       // Refresh the card
