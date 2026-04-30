@@ -116,6 +116,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       Today
     </button>
+    <button class="nav-tab" onclick="show('hist')" id="tab-hist">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 16v-5h5"/></svg>
+      History
+    </button>
   </div>
 </nav>
 
@@ -289,6 +293,56 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   <div id="brief-body"><div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p></div>
 </div>
 
+<!-- HISTORY SCREEN -->
+<div class="screen" id="screen-hist">
+  <p class="page-title">Reservation History</p>
+  <p class="page-sub">All reservations across all months</p>
+
+  <!-- FILTERS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <div>
+      <label class="form-label">Filter by Month</label>
+      <select class="form-input" id="hist-month" onchange="filterHist()">
+        <option value="">All Months</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Filter by Source</label>
+      <select class="form-input" id="hist-source" onchange="filterHist()">
+        <option value="">All Sources</option>
+        <option value="Airbnb">Airbnb</option>
+        <option value="Booking.com">Booking.com</option>
+        <option value="Offline">Offline</option>
+        <option value="Owner">Owner</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="refresh-btn" onclick="loadHist()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Refresh
+  </button>
+
+  <div id="hist-summary" style="display:none;background:var(--s2);border:1px solid var(--border);border-radius:13px;padding:14px 16px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Bookings</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)" id="hist-count">0</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">EGP</div>
+        <div style="font-size:18px;font-weight:700;color:var(--accent)" id="hist-egp">0</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">USD</div>
+        <div style="font-size:18px;font-weight:700;color:#4a9fd4" id="hist-usd">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hist-body"><div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -426,6 +480,7 @@ function show(name) {
   if (name === "sched")   loadSched();
   if (name === "manage")  show_manage();
   if (name === "brief")   loadBrief();
+  if (name === "hist")    loadHist();
 }
 
 function pick(group, btn, value) {
@@ -701,6 +756,130 @@ async function loadSched() {
 // ═══════════════════════════════════
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function fmtD(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+// ═══════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════
+let histAllData = []; // all reservations cached
+
+async function loadHist() {
+  document.getElementById("hist-body").innerHTML =
+    '<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p>';
+  document.getElementById("hist-summary").style.display = "none";
+
+  // Populate month filter
+  const msel = document.getElementById("hist-month");
+  if (msel.options.length <= 1) {
+    Object.keys(MONTH_DBS).forEach(m => {
+      const o = document.createElement("option");
+      o.value = o.textContent = m;
+      msel.appendChild(o);
+    });
+  }
+
+  histAllData = [];
+  const months = Object.keys(MONTH_DBS);
+
+  await Promise.all(months.map(async (month) => {
+    try {
+      let cursor = null;
+      do {
+        const body = { page_size: 100, sorts: [{ property: "Check-in Date", direction: "descending" }] };
+        if (cursor) body.start_cursor = cursor;
+        const data = await notionQuery(MONTH_DBS[month], body);
+        (data.results || []).forEach(p => {
+          const pr = p.properties || {};
+          const unit   = pr["Listing Name"]?.select?.name || "";
+          const ci     = pr["Check-in Date"]?.date?.start || "";
+          const co     = pr["Check-out Date"]?.date?.start || "";
+          const price  = pr["Total Price"]?.number || 0;
+          const cur    = pr["Currency"]?.select?.name || "EGP";
+          const guest  = pr["Guest Name"]?.rich_text?.[0]?.plain_text || "—";
+          const source = pr["Booking Source"]?.select?.name || "—";
+          if (unit && ci) histAllData.push({ month, unit, ci, co, price, cur, guest, source, id: p.id });
+        });
+        cursor = data.has_more ? data.next_cursor : null;
+      } while (cursor);
+    } catch(e) {}
+  }));
+
+  // Sort all by check-in date descending
+  histAllData.sort((a,b) => b.ci.localeCompare(a.ci));
+  renderHist(histAllData);
+}
+
+function filterHist() {
+  const month  = document.getElementById("hist-month").value;
+  const source = document.getElementById("hist-source").value;
+  let filtered = histAllData;
+  if (month)  filtered = filtered.filter(r => r.month === month);
+  if (source) filtered = filtered.filter(r => r.source === source);
+  renderHist(filtered);
+}
+
+function renderHist(rows) {
+  // Summary
+  const totEgp = rows.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
+  const totUsd = rows.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
+  document.getElementById("hist-count").textContent = rows.length;
+  document.getElementById("hist-egp").textContent   = totEgp > 0 ? "EGP "+totEgp.toLocaleString() : "—";
+  document.getElementById("hist-usd").textContent   = totUsd > 0 ? "$"+totUsd.toLocaleString() : "—";
+  document.getElementById("hist-summary").style.display = rows.length > 0 ? "block" : "none";
+
+  if (!rows.length) {
+    document.getElementById("hist-body").innerHTML =
+      '<div class="empty-state"><span class="empty-icon">📭</span>No reservations found</div>';
+    return;
+  }
+
+  // Group by month
+  const byMonth = {};
+  rows.forEach(r => {
+    if (!byMonth[r.month]) byMonth[r.month] = [];
+    byMonth[r.month].push(r);
+  });
+
+  let h = "";
+  Object.entries(byMonth).forEach(([month, items]) => {
+    const mEgp = items.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
+    const mUsd = items.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
+    h += `<div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.1em;text-transform:uppercase">${month}</div>
+        <div style="font-size:11px;color:var(--muted)">
+          ${items.length} booking${items.length!==1?"s":""}
+          ${mEgp>0?" · EGP "+mEgp.toLocaleString():""}
+          ${mUsd>0?" · $"+mUsd.toLocaleString():""}
+        </div>
+      </div>`;
+
+    items.forEach(r => {
+      const nights = r.co ? Math.round((new Date(r.co)-new Date(r.ci+"T00:00:00"))/86400000) : "?";
+      const srcColor = r.source==="Airbnb"?"#ff5a5f":r.source==="Booking.com"?"#003580":r.source==="Owner"?"#3dba77":"#888";
+      const srcIcon  = r.source==="Airbnb"?"✈":r.source==="Booking.com"?"🏨":r.source==="Owner"?"👤":"🤝";
+      h += `<div class="res-card" style="border-left:3px solid ${srcColor};margin-bottom:8px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="flex:1">
+            <div class="card-unit">${r.unit}</div>
+            <div class="card-guest">${r.guest}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:700;color:${r.cur==="EGP"?"var(--accent2, #e8c97a)":"#4a9fd4"}">
+              ${r.cur==="EGP"?"EGP "+r.price.toLocaleString():"$"+r.price.toLocaleString()}
+            </div>
+          </div>
+        </div>
+        <div class="card-meta" style="margin-top:7px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span>${fmtD(r.ci)} → ${r.co?fmtD(r.co):"?"} · ${nights}n</span>
+          <span style="color:${srcColor}">${srcIcon} ${r.source}</span>
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  });
+
+  document.getElementById("hist-body").innerHTML = h;
+}
+
 // ═══════════════════════════════════
 // TODAY'S BRIEFING
 // ═══════════════════════════════════
