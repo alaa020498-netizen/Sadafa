@@ -112,6 +112,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Manage
     </button>
+    <button class="nav-tab" onclick="show('brief')" id="tab-brief">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Today
+    </button>
   </div>
 </nav>
 
@@ -274,6 +278,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   </div>
 </div>
 
+<!-- TODAY BRIEFING SCREEN -->
+<div class="screen" id="screen-brief">
+  <p class="page-title" id="brief-title">Today's Briefing</p>
+  <p class="page-sub" id="brief-date-label"></p>
+  <button class="refresh-btn" onclick="loadBrief()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Refresh
+  </button>
+  <div id="brief-body"><div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -410,6 +425,7 @@ function show(name) {
   document.getElementById("tab-" + name).classList.add("active");
   if (name === "sched")   loadSched();
   if (name === "manage")  show_manage();
+  if (name === "brief")   loadBrief();
 }
 
 function pick(group, btn, value) {
@@ -685,6 +701,181 @@ async function loadSched() {
 // ═══════════════════════════════════
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function fmtD(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+// ═══════════════════════════════════
+// TODAY'S BRIEFING
+// ═══════════════════════════════════
+async function loadBrief() {
+  const today = new Date();
+  const todayStr = fmt(today);
+
+  document.getElementById("brief-date-label").textContent =
+    today.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  document.getElementById("brief-body").innerHTML =
+    '<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p>';
+
+  const checkins=[], checkouts=[], occupied=[], errors=[];
+  const allUnits = new Set();
+  const nextCheckin = {}; // unit -> next checkin date
+
+  await Promise.all(Object.entries(MONTH_DBS).map(async ([month, dbId]) => {
+    try {
+      // Check-ins today
+      const ri = await notionQuery(dbId,{filter:{property:"Check-in Date",date:{equals:todayStr}},page_size:100});
+      (ri.results||[]).forEach(p=>{
+        const pr=p.properties||{};
+        checkins.push({
+          unit:   pr["Listing Name"]?.select?.name||"Unknown",
+          guest:  pr["Guest Name"]?.rich_text?.[0]?.plain_text||"—",
+          co:     pr["Check-out Date"]?.date?.start||"",
+          source: pr["Booking Source"]?.select?.name||"",
+        });
+      });
+
+      // Check-outs today
+      const ro = await notionQuery(dbId,{filter:{property:"Check-out Date",date:{equals:todayStr}},page_size:100});
+      (ro.results||[]).forEach(p=>{
+        const pr=p.properties||{};
+        checkouts.push({
+          unit:  pr["Listing Name"]?.select?.name||"Unknown",
+          guest: pr["Guest Name"]?.rich_text?.[0]?.plain_text||"—",
+          ci:    pr["Check-in Date"]?.date?.start||"",
+        });
+      });
+
+      // Currently occupied: checkin <= today < checkout
+      const rocc = await notionQuery(dbId,{
+        filter:{and:[
+          {property:"Check-in Date", date:{on_or_before:todayStr}},
+          {property:"Check-out Date",date:{after:todayStr}},
+        ]},
+        page_size:100
+      });
+      (rocc.results||[]).forEach(p=>{
+        const pr=p.properties||{};
+        const unit = pr["Listing Name"]?.select?.name||"Unknown";
+        allUnits.add(unit);
+        occupied.push({
+          unit,
+          guest:  pr["Guest Name"]?.rich_text?.[0]?.plain_text||"—",
+          co:     pr["Check-out Date"]?.date?.start||"",
+          source: pr["Booking Source"]?.select?.name||"",
+        });
+      });
+
+      // Next upcoming reservations — to show "available until" for free units
+      const rnext = await notionQuery(dbId,{
+        filter:{property:"Check-in Date",date:{after:todayStr}},
+        page_size:100,
+      });
+      (rnext.results||[]).forEach(p=>{
+        const pr=p.properties||{};
+        const unit = pr["Listing Name"]?.select?.name||"";
+        const ci   = pr["Check-in Date"]?.date?.start||"";
+        if(unit && ci && (!nextCheckin[unit] || ci < nextCheckin[unit]))
+          nextCheckin[unit] = ci;
+      });
+    } catch(e){ errors.push(month+": "+e.message); }
+  }));
+
+  // Available units = all known units minus occupied ones
+  const occupiedUnits = new Set(occupied.map(r=>r.unit));
+  
+  // Get all units from cache or fetch
+  let unitsList = unitsCache || [];
+  if(!unitsList.length){
+    try{ unitsList = await fetchUnits(); } catch(e){}
+  }
+  const available = unitsList.filter(u => !occupiedUnits.has(u));
+
+  renderBrief(todayStr, checkins, checkouts, occupied, available, nextCheckin, errors);
+}
+
+function renderBrief(todayStr, checkins, checkouts, occupied, available, nextCheckin, errors) {
+  let h = "";
+
+  if(errors.length) h+=`<div class="warn-box">⚠ ${errors.join("<br>")}</div>`;
+
+  // ── CHECK-INS TODAY ──
+  h+=`<div class="sec-label"><div class="sdot sdot-in"></div>
+    <span style="color:var(--in)">Check-ins Today</span>
+    <span class="cnt-badge">${checkins.length}</span></div>`;
+  if(!checkins.length){
+    h+='<div class="empty-state"><span class="empty-icon">😌</span>No check-ins today</div>';
+  } else {
+    checkins.forEach(r=>{
+      const nights = r.co ? Math.round((new Date(r.co)-new Date(todayStr+"T00:00:00"))/86400000) : "?";
+      h+=`<div class="res-card in">
+        <div class="card-unit">${r.unit}</div>
+        <div class="card-guest">${r.guest}${r.source?" · "+r.source:""}</div>
+        <div class="card-meta">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          ${nights} night${nights!==1?"s":""} · out ${r.co?fmtD(r.co):"?"}
+        </div></div>`;
+    });
+  }
+
+  // ── CHECK-OUTS TODAY ──
+  h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot sdot-out"></div>
+    <span style="color:var(--out)">Check-outs Today</span>
+    <span class="cnt-badge">${checkouts.length}</span></div>`;
+  if(!checkouts.length){
+    h+='<div class="empty-state"><span class="empty-icon">😌</span>No check-outs today</div>';
+  } else {
+    checkouts.forEach(r=>{
+      h+=`<div class="res-card out">
+        <div class="card-unit">${r.unit}</div>
+        <div class="card-guest">${r.guest}</div>
+        <div class="card-meta">Checked in ${r.ci?fmtD(r.ci):"?"}</div>
+      </div>`;
+    });
+  }
+
+  // ── CURRENTLY OCCUPIED ──
+  h+=`<div class="sec-label" style="margin-top:20px">
+    <div class="sdot" style="background:#a78bfa"></div>
+    <span style="color:#a78bfa">Currently Occupied</span>
+    <span class="cnt-badge">${occupied.length}</span></div>`;
+  if(!occupied.length){
+    h+='<div class="empty-state"><span class="empty-icon">🏠</span>No units currently occupied</div>';
+  } else {
+    occupied.forEach(r=>{
+      const daysLeft = r.co ? Math.round((new Date(r.co)-new Date())/86400000) : "?";
+      h+=`<div class="res-card" style="border-left:3px solid #a78bfa">
+        <div class="card-unit">${r.unit}</div>
+        <div class="card-guest">${r.guest}${r.source?" · "+r.source:""}</div>
+        <div class="card-meta">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Checkout ${r.co?fmtD(r.co):"?"} · ${daysLeft} day${daysLeft!==1?"s":""} left
+        </div></div>`;
+    });
+  }
+
+  // ── AVAILABLE UNITS ──
+  h+=`<div class="sec-label" style="margin-top:20px">
+    <div class="sdot" style="background:var(--success)"></div>
+    <span style="color:var(--success)">Available Tonight</span>
+    <span class="cnt-badge">${available.length}</span></div>`;
+  if(!available.length){
+    h+='<div class="empty-state"><span class="empty-icon">🔑</span>All units occupied</div>';
+  } else {
+    h+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 15px">`;
+    available.forEach((u,i)=>{
+      const nextCi = nextCheckin[u];
+      const availTill = nextCi
+        ? `<span style="font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0">until ${fmtD(nextCi)}</span>`
+        : `<span style="font-size:11px;color:var(--success);margin-left:auto;flex-shrink:0">No upcoming booking</span>`;
+      h+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;${i<available.length-1?"border-bottom:1px solid var(--border)":""}">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+        <div style="font-size:13px;color:var(--text);flex:1">${u}</div>
+        ${availTill}
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+
+  document.getElementById("brief-body").innerHTML = h;
+}
+
 
 // ═══════════════════════════════════
 // MANAGE — find / cancel / modify
