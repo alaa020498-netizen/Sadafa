@@ -91,6 +91,48 @@ select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://
 @keyframes spin{to{transform:rotate(360deg)}}
 .warn-box{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);border-radius:11px;padding:12px 14px;font-size:12px;color:var(--accent);line-height:1.6;margin-bottom:14px}
 input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
+
+/* ── UNIT DASHBOARD ── */
+.cal-grid-wrap{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
+.cal-month-label{font-family:"DM Serif Display",serif;font-size:17px;color:var(--text);margin-bottom:14px}
+.cal-legend{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted2)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dn{text-align:center;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:3px 0;margin-bottom:3px}
+.cal-day{aspect-ratio:1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:500;position:relative}
+.cal-day.empty{background:transparent}
+.cal-day.avail{background:var(--surface2);color:var(--muted)}
+.cal-day.booked{background:rgba(201,168,76,.18);color:var(--accent2);border:1px solid rgba(201,168,76,.25)}
+.cal-day.cin{background:rgba(76,175,130,.2);color:var(--success);border:1px solid rgba(76,175,130,.3)}
+.cal-day.cout{background:rgba(224,92,92,.15);color:var(--danger);border:1px solid rgba(224,92,92,.25)}
+.cal-day.both{background:var(--surface2);border:1px solid var(--border)}
+.cal-day.tday{box-shadow:0 0 0 2px var(--accent)}
+.cal-day-n{font-size:11px;font-weight:600;line-height:1}
+.cal-day-dot{width:3px;height:3px;border-radius:50%;background:currentColor;margin-top:2px}
+.guest-init{position:absolute;bottom:1px;font-size:7px;color:currentColor;opacity:.65}
+.unit-kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.unit-kpi{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden}
+.unit-kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.unit-kpi.gold::before{background:var(--accent)}
+.unit-kpi.blue::before{background:#4a9fd4}
+.unit-kpi.green::before{background:var(--success)}
+.unit-kpi.gray::before{background:#555}
+.unit-kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.unit-kpi-val{font-size:18px;font-weight:700;line-height:1;margin-bottom:3px}
+.unit-kpi.gold .unit-kpi-val{color:var(--accent2)}
+.unit-kpi.blue .unit-kpi-val{color:#4a9fd4}
+.unit-kpi.green .unit-kpi-val{color:var(--success)}
+.unit-kpi.gray .unit-kpi-val{color:var(--muted2)}
+.unit-kpi-sub{font-size:10px;color:var(--muted)}
+.unit-res-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px}
+.unit-res-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.unit-res-dates{font-size:13px;font-weight:600;color:var(--text)}
+.unit-res-price{font-size:13px;font-weight:700}
+.unit-res-price.egp{color:var(--accent2)}
+.unit-res-price.usd{color:#4a9fd4}
+.unit-res-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.src-pip{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -119,6 +161,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
     <button class="nav-tab" onclick="show('hist')" id="tab-hist">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 16v-5h5"/></svg>
       History
+    </button>
+    <button class="nav-tab" onclick="show('unit')" id="tab-unit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Unit
     </button>
   </div>
 </nav>
@@ -343,6 +389,23 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   <div id="hist-body"><div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p></div>
 </div>
 
+<!-- UNIT DASHBOARD SCREEN -->
+<div class="screen" id="screen-unit">
+  <p class="page-title">Unit Dashboard</p>
+  <p class="page-sub">Calendar & reservations for current month</p>
+
+  <div class="form-group">
+    <label class="form-label">Select Unit</label>
+    <select class="form-input" id="ud-unit">
+      <option value="">Select a unit…</option>
+    </select>
+  </div>
+
+  <button class="btn-main" id="btn-ud" onclick="loadUnitDash()" style="margin-bottom:20px">View Dashboard →</button>
+
+  <div id="ud-body"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -356,7 +419,8 @@ const WORKER = "https://blue-unit-32c2.alaa020498.workers.dev";
 const MONTH_DBS = {
   "April":      "b7dc90a9c0078392a77a0124767bd463",
   "May":        "350c90a9c007818bbacbd1fa065d5091",
-  "June":    "352c90a9c00781c395faed49f5f8f48e",
+  "June":       "352c90a9c00781c395faed49f5f8f48e",
+  // "June":    "YOUR_JUNE_DATABASE_ID",
   // "July":    "YOUR_JULY_DATABASE_ID",
   // "August":  "YOUR_AUGUST_DATABASE_ID",
   // "September":"YOUR_SEPTEMBER_DATABASE_ID",
@@ -425,34 +489,43 @@ function getLatestMonthDb() {
 async function fetchUnits() {
   if (unitsCache) return unitsCache;
 
-  const { month, dbId } = getLatestMonthDb();
   const hint = document.getElementById("unit-hint");
-  hint.className = "select-hint loading";
-  hint.textContent = `⏳ Loading units from ${month}…`;
+  const keys = Object.keys(MONTH_DBS);
 
-  const names = new Set();
-  let cursor = null;
-  try {
-    do {
-      const body = { page_size: 100 };
-      if (cursor) body.start_cursor = cursor;
-      const data = await notionQuery(dbId, body);
-      (data.results || []).forEach(p => {
-        const name = p.properties?.["Listing Name"]?.select?.name;
-        if (name) names.add(name.trim());
-      });
-      cursor = data.has_more ? data.next_cursor : null;
-    } while (cursor);
+  // Try months from latest to oldest until we find one with units
+  for (let i = keys.length - 1; i >= 0; i--) {
+    const month = keys[i];
+    const dbId  = MONTH_DBS[month];
+    hint.className = "select-hint loading";
+    hint.textContent = `⏳ Loading units from ${month}…`;
 
-    unitsCache = [...names].sort();
-    hint.className = "select-hint ok";
-    hint.textContent = `✓ ${unitsCache.length} units from ${month}`;
-    return unitsCache;
-  } catch(e) {
-    hint.className = "select-hint err";
-    hint.textContent = "✗ Failed to load units";
-    return [];
+    const names = new Set();
+    let cursor = null;
+    try {
+      do {
+        const body = { page_size: 100 };
+        if (cursor) body.start_cursor = cursor;
+        const data = await notionQuery(dbId, body);
+        (data.results || []).forEach(p => {
+          const name = p.properties?.["Listing Name"]?.select?.name;
+          if (name) names.add(name.trim());
+        });
+        cursor = data.has_more ? data.next_cursor : null;
+      } while (cursor);
+
+      if (names.size > 0) {
+        unitsCache = [...names].sort();
+        hint.className = "select-hint ok";
+        hint.textContent = `✓ ${unitsCache.length} units from ${month}`;
+        return unitsCache;
+      }
+      // Empty month — try previous one
+    } catch(e) { /* try previous month */ }
   }
+
+  hint.className = "select-hint err";
+  hint.textContent = "✗ Failed to load units";
+  return [];
 }
 
 function populateUnits(units) {
@@ -481,6 +554,7 @@ function show(name) {
   if (name === "manage")  show_manage();
   if (name === "brief")   loadBrief();
   if (name === "hist")    loadHist();
+  if (name === "unit")    initUnitDash();
 }
 
 function pick(group, btn, value) {
@@ -756,6 +830,173 @@ async function loadSched() {
 // ═══════════════════════════════════
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function fmtD(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+// ═══════════════════════════════════
+// UNIT DASHBOARD
+// ═══════════════════════════════════
+async function initUnitDash() {
+  const sel = document.getElementById("ud-unit");
+  if (sel.options.length <= 1) {
+    const units = await fetchUnits();
+    units.forEach(u => {
+      const o = document.createElement("option");
+      o.value = o.textContent = u;
+      sel.appendChild(o);
+    });
+  }
+}
+
+async function loadUnitDash() {
+  const unit = document.getElementById("ud-unit").value;
+  if (!unit) { toast("Select a unit","err"); return; }
+
+  const btn = document.getElementById("btn-ud");
+  btn.disabled = true; btn.textContent = "Loading…";
+  document.getElementById("ud-body").innerHTML =
+    '<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Fetching reservations…</p>';
+
+  const now       = new Date();
+  const monthIdx  = now.getMonth();
+  const year      = now.getFullYear();
+  const monthName = now.toLocaleString("en-US",{month:"long"});
+  const daysInMonth = new Date(year, monthIdx+1, 0).getDate();
+
+  // Fetch from all months that could have this month's data
+  let rows = [];
+  await Promise.all(Object.entries(MONTH_DBS).map(async ([m, dbId]) => {
+    try {
+      const data = await notionQuery(dbId, {
+        filter: { property: "Listing Name", select: { equals: unit } },
+        page_size: 100
+      });
+      (data.results||[]).forEach(p => {
+        const pr = p.properties||{};
+        const ci = pr["Check-in Date"]?.date?.start||"";
+        const co = pr["Check-out Date"]?.date?.start||"";
+        if (!ci) return;
+        // Include if stay overlaps current month
+        const ciD = new Date(ci+"T00:00:00");
+        const coD = co ? new Date(co+"T00:00:00") : ciD;
+        const mStart = new Date(year, monthIdx, 1);
+        const mEnd   = new Date(year, monthIdx+1, 0);
+        if (ciD <= mEnd && coD >= mStart) {
+          rows.push({
+            ci, co,
+            price:  pr["Total Price"]?.number||0,
+            cur:    pr["Currency"]?.select?.name||"EGP",
+            guest:  pr["Guest Name"]?.rich_text?.[0]?.plain_text||"—",
+            source: pr["Booking Source"]?.select?.name||"—",
+          });
+        }
+      });
+    } catch(e) {}
+  }));
+
+  // Deduplicate by ci
+  const seen = new Set();
+  rows = rows.filter(r => { if(seen.has(r.ci)) return false; seen.add(r.ci); return true; });
+  rows.sort((a,b) => a.ci.localeCompare(b.ci));
+
+  renderUnitDash(unit, monthName, year, monthIdx, daysInMonth, rows);
+  btn.disabled = false; btn.textContent = "View Dashboard →";
+}
+
+function renderUnitDash(unit, monthName, year, monthIdx, daysInMonth, rows) {
+  const today = new Date();
+
+  // Build day status map
+  const ds = {};
+  rows.forEach(r => {
+    const ciD = new Date(r.ci+"T00:00:00");
+    const coD = r.co ? new Date(r.co+"T00:00:00") : ciD;
+    for (let d=1; d<=daysInMonth; d++) {
+      const dt = new Date(year, monthIdx, d);
+      const isCi = ciD.getTime() === dt.getTime();
+      const isCo = coD.getTime() === dt.getTime();
+      const mid  = dt >= ciD && dt < coD && !isCi;
+      if      (isCi && isCo) ds[d] = {cls:"both", r};
+      else if (isCi)         ds[d] = {cls:"cin",  r};
+      else if (isCo)         ds[d] = {cls:"cout", r};
+      else if (mid)          ds[d] = {cls:"booked",r};
+    }
+  });
+
+  // Stats
+  const totEgp    = rows.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
+  const totUsd    = rows.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
+  const totNights = rows.reduce((s,r)=>s+nts(r.ci,r.co),0);
+  const occ       = Math.round(totNights/daysInMonth*100);
+
+  // Calendar
+  const firstDay = new Date(year, monthIdx, 1).getDay();
+  const dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  let cal = dayNames.map(d=>`<div class="cal-dn">${d}</div>`).join("");
+  for(let i=0;i<firstDay;i++) cal+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const info = ds[d];
+    const cls  = info ? info.cls : "avail";
+    const isToday = today.getDate()===d && today.getMonth()===monthIdx && today.getFullYear()===year;
+    const init = info?.r?.guest && info.r.guest!=="—"
+      ? info.r.guest.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() : "";
+    cal += `<div class="cal-day ${cls}${isToday?" tday":""}">
+      <div class="cal-day-n">${d}</div>
+      ${info?`<div class="cal-day-dot"></div>`:""}
+      ${init?`<div class="guest-init">${init}</div>`:""}
+    </div>`;
+  }
+
+  // Source color
+  function srcColor(s){
+    return {Airbnb:"#ff5a5f","Booking.com":"#4a9fd4",Offline:"var(--success)",Owner:"#a78bfa"}[s]||"var(--muted)";
+  }
+
+  // Reservation cards
+  let resHtml = rows.length ? rows.map(r=>{
+    const n = nts(r.ci, r.co);
+    return `<div class="unit-res-card">
+      <div class="unit-res-top">
+        <div class="unit-res-dates">${fmtD(r.ci)} → ${r.co?fmtD(r.co):"?"}</div>
+        <div class="unit-res-price ${r.cur==="EGP"?"egp":"usd"}">${r.cur==="EGP"?"EGP "+r.price.toLocaleString():"$"+r.price.toLocaleString()}</div>
+      </div>
+      <div class="unit-res-meta">
+        <div class="src-pip" style="background:${srcColor(r.source)}"></div>
+        <span>${r.guest}</span>
+        <span>·</span>
+        <span>${r.source}</span>
+        <span>·</span>
+        <span>${n} night${n!==1?"s":""}</span>
+      </div>
+    </div>`;
+  }).join("") :
+  `<div class="empty-state"><span class="empty-icon">🏠</span>No reservations this month</div>`;
+
+  document.getElementById("ud-body").innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;font-weight:500">${unit}</div>
+
+    <div class="unit-kpi-row">
+      <div class="unit-kpi gold"><div class="unit-kpi-lbl">Revenue EGP</div><div class="unit-kpi-val">${totEgp>0?"EGP "+totEgp.toLocaleString():"—"}</div><div class="unit-kpi-sub">${monthName} ${year}</div></div>
+      <div class="unit-kpi blue"><div class="unit-kpi-lbl">Revenue USD</div><div class="unit-kpi-val">${totUsd>0?"$"+totUsd.toLocaleString():"—"}</div><div class="unit-kpi-sub">${monthName} ${year}</div></div>
+      <div class="unit-kpi green"><div class="unit-kpi-lbl">Occupancy</div><div class="unit-kpi-val">${occ}%</div><div class="unit-kpi-sub">${totNights} nights</div></div>
+      <div class="unit-kpi gray"><div class="unit-kpi-lbl">Bookings</div><div class="unit-kpi-val">${rows.length}</div><div class="unit-kpi-sub">${monthName}</div></div>
+    </div>
+
+    <div class="cal-grid-wrap">
+      <div class="cal-month-label">${monthName} ${year}</div>
+      <div class="cal-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(76,175,130,.5)"></div>Check-in</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(224,92,92,.4)"></div>Check-out</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(201,168,76,.4)"></div>Booked</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--surface2)"></div>Available</div>
+      </div>
+      <div class="cal-grid">${cal}</div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">
+      Reservations — ${monthName} ${year}
+    </div>
+    ${resHtml}
+  `;
+}
+
 // ═══════════════════════════════════
 // HISTORY
 // ═══════════════════════════════════
