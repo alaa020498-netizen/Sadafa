@@ -796,9 +796,11 @@ function renderUnitDash(unit,monthName,year,monthIdx,daysInMonth,rows) {
       else if(mid)   ds[d]={cls:"booked",r};
     }
   });
-  const totEgp=rows.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
-  const totUsd=rows.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
-  const totNights=rows.reduce((s,r)=>s+nts(r.ci,r.co),0);
+  // Only count/show reservations that CHECK IN this month (not carryovers from prev month)
+  const monthRows=rows.filter(r=>{ const d=new Date(r.ci+"T00:00:00"); return d.getMonth()===monthIdx&&d.getFullYear()===year; });
+  const totEgp=monthRows.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
+  const totUsd=monthRows.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
+  const totNights=monthRows.reduce((s,r)=>s+nts(r.ci,r.co),0);
   const occ=Math.round(totNights/daysInMonth*100);
   const firstDay=new Date(year,monthIdx,1).getDay();
   const dayNames=["Su","Mo","Tu","We","Th","Fr","Sa"];
@@ -812,10 +814,10 @@ function renderUnitDash(unit,monthName,year,monthIdx,daysInMonth,rows) {
     cal+=`<div class="cal-day ${cls}${isToday?" tday":""}"><div class="cal-day-n">${d}</div>${info?`<div class="cal-day-dot"></div>`:""}${init?`<div class="guest-init">${init}</div>`:""}</div>`;
   }
   function srcColor(s){ return {Airbnb:"#ff5a5f","Booking.com":"#4a9fd4",Offline:"var(--success)",Owner:"#a78bfa"}[s]||"var(--muted)"; }
-  let resHtml=rows.length?rows.map(r=>{
+  let resHtml=monthRows.length?monthRows.map(r=>{
     const n=nts(r.ci,r.co);
     return `<div class="unit-res-card"><div class="unit-res-top"><div class="unit-res-dates">${fmtD(r.ci)} → ${r.co?fmtD(r.co):"?"}</div><div class="unit-res-price ${r.cur==="EGP"?"egp":"usd"}">${r.cur==="EGP"?"EGP "+r.price.toLocaleString():"$"+r.price.toLocaleString()}</div></div><div class="unit-res-meta"><div class="src-pip" style="background:${srcColor(r.source)}"></div><span>${r.guest}</span><span>·</span><span>${r.source}</span><span>·</span><span>${n} night${n!==1?"s":""}</span></div></div>`;
-  }).join(""):`<div class="empty-state"><span class="empty-icon">🏠</span>No reservations this month</div>`;
+  }).join(""):`<div class="empty-state"><span class="empty-icon">🏠</span>No check-ins this month</div>`;
 
   document.getElementById("ud-body").innerHTML=`
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;font-weight:500">${unit}</div>
