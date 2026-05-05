@@ -84,6 +84,28 @@ select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://
 @keyframes spin{to{transform:rotate(360deg)}}
 .warn-box{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);border-radius:11px;padding:12px 14px;font-size:12px;color:var(--accent);line-height:1.6;margin-bottom:14px}
 input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
+/* ── SEARCHABLE UNIT DROPDOWN ── */
+.unit-dropdown{position:relative;width:100%}
+.unit-selected{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;font-size:15px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color .18s;box-sizing:border-box}
+.unit-selected.open{border-color:var(--accent);border-radius:12px 12px 0 0}
+.unit-selected span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:left}
+.unit-selected svg{flex-shrink:0;margin-left:8px;transition:transform .2s}
+.unit-selected.open svg{transform:rotate(180deg)}
+.unit-dropdown-panel{display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--surface2);border:1.5px solid var(--accent);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.unit-dropdown-panel.open{display:block}
+.unit-search-wrap{padding:10px 12px;border-bottom:1px solid var(--border)}
+.unit-search{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box}
+.unit-search:focus{border-color:var(--accent)}
+.unit-list{max-height:240px;overflow-y:auto;overscroll-behavior:contain}
+.unit-list::-webkit-scrollbar{width:4px}
+.unit-list::-webkit-scrollbar-track{background:transparent}
+.unit-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.unit-option{padding:12px 15px;font-size:14px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s}
+.unit-option:last-child{border-bottom:none}
+.unit-option:hover,.unit-option.focused{background:rgba(201,168,76,.12);color:var(--accent)}
+.unit-option.selected{color:var(--accent);font-weight:600}
+.unit-no-results{padding:16px 15px;font-size:13px;color:var(--muted);text-align:center}
+
 
 .cal-grid-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
 .cal-month-label{font-family:"DM Serif Display",serif;font-size:17px;color:var(--text);margin-bottom:14px}
@@ -180,9 +202,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   </div>
   <div class="form-group">
     <label class="form-label">Unit</label>
-    <select class="form-input" id="f-unit">
-      <option value="">Pick a check-in date first…</option>
-    </select>
+    <div class="unit-dropdown" id="dd-f-unit">
+      <div class="unit-selected" onclick="ddToggle('f-unit')" id="f-unit-display">
+        <span id="f-unit-label" style="color:var(--muted)">Pick a check-in date first…</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="unit-dropdown-panel" id="f-unit-panel">
+        <div class="unit-search-wrap">
+          <input class="unit-search" type="text" placeholder="Search unit…" oninput="ddFilter('f-unit',this.value)" id="f-unit-search">
+        </div>
+        <div class="unit-list" id="f-unit-list"></div>
+      </div>
+      <input type="hidden" id="f-unit" value="">
+    </div>
     <div class="select-hint" id="unit-hint"></div>
   </div>
   <div class="form-group">
@@ -229,7 +261,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   <p class="page-sub">Find, cancel or modify a booking</p>
   <div class="form-group">
     <label class="form-label">Unit</label>
-    <select class="form-input" id="m-unit"><option value="">Select unit…</option></select>
+    <div class="unit-dropdown" id="dd-m-unit">
+      <div class="unit-selected" onclick="ddToggle('m-unit')" id="m-unit-display">
+        <span id="m-unit-label" style="color:var(--muted)">Select unit…</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="unit-dropdown-panel" id="m-unit-panel">
+        <div class="unit-search-wrap">
+          <input class="unit-search" type="text" placeholder="Search unit…" oninput="ddFilter('m-unit',this.value)" id="m-unit-search">
+        </div>
+        <div class="unit-list" id="m-unit-list"></div>
+      </div>
+      <input type="hidden" id="m-unit" value="">
+    </div>
   </div>
   <div class="form-group">
     <label class="form-label">Check-in Date</label>
@@ -356,9 +400,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   <p class="page-sub">Calendar & reservations by unit and month</p>
   <div class="form-group">
     <label class="form-label">Select Unit</label>
-    <select class="form-input" id="ud-unit">
-      <option value="">Loading units…</option>
-    </select>
+    <div class="unit-dropdown" id="dd-ud-unit">
+      <div class="unit-selected" onclick="ddToggle('ud-unit')" id="ud-unit-display">
+        <span id="ud-unit-label" style="color:var(--muted)">Loading units…</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="unit-dropdown-panel" id="ud-unit-panel">
+        <div class="unit-search-wrap">
+          <input class="unit-search" type="text" placeholder="Search unit…" oninput="ddFilter('ud-unit',this.value)" id="ud-unit-search">
+        </div>
+        <div class="unit-list" id="ud-unit-list"></div>
+      </div>
+      <input type="hidden" id="ud-unit" value="">
+    </div>
   </div>
   <div class="form-group">
     <label class="form-label">Select Month</label>
@@ -453,15 +507,9 @@ async function fetchUnits() {
 }
 
 function populateUnits(units) {
-  const sel = document.getElementById("f-unit");
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">Select unit…</option>';
-  units.forEach(u => {
-    const o = document.createElement("option");
-    o.value = o.textContent = u;
-    sel.appendChild(o);
-  });
-  if (prev) sel.value = prev;
+  const prev = document.getElementById("f-unit").value;
+  ddBuild("f-unit", units, "Select unit…");
+  if (prev) ddSelect("f-unit", prev);
 }
 
 const state = { source:"", currency:"EGP" };
@@ -717,16 +765,12 @@ async function initUnitDash() {
   for(let i=0;i<sel2.options.length;i++){
     if(sel2.options[i].value===monthName+"|"+year){ sel2.selectedIndex=i; break; }
   }
-  const sel = document.getElementById("ud-unit");
-  if (sel.options.length <= 1 || sel.options[0].value === "") {
-    sel.innerHTML = "<option value=''>Loading…</option>";
+  if(!_ddUnits["ud-unit"] || !_ddUnits["ud-unit"].length){
+    document.getElementById("ud-unit-label").textContent = "Loading…";
     const units = await fetchUnits();
-    sel.innerHTML = "<option value=''>Select a unit…</option>";
-    units.forEach(u => {
-      const o = document.createElement("option");
-      o.value = o.textContent = u;
-      sel.appendChild(o);
-    });
+    ddBuild("ud-unit", units, "Select a unit…");
+    document.getElementById("ud-unit-label").textContent = "Select a unit…";
+    document.getElementById("ud-unit-label").style.color = "var(--muted)";
   }
 }
 
@@ -958,10 +1002,10 @@ function renderBrief(todayStr,checkins,checkouts,occupied,available,nextCheckin,
 let foundPageId=null, foundMonthDb=null, modCurrency="EGP";
 
 async function show_manage() {
-  const sel=document.getElementById("m-unit");
-  if(sel.options.length<=1){
+  const cur = document.getElementById("m-unit").value;
+  if(!cur && (!_ddUnits["m-unit"] || !_ddUnits["m-unit"].length)){
     const units=await fetchUnits();
-    units.forEach(u=>{ const o=document.createElement("option"); o.value=o.textContent=u; sel.appendChild(o); });
+    ddBuild("m-unit", units, "Select unit…");
   }
 }
 
@@ -1077,6 +1121,86 @@ async function saveModify() {
   } catch(e){ toast("Network error","err"); }
   btn.disabled=false; btn.textContent="Save Changes →";
 }
+
+
+// ── SEARCHABLE DROPDOWN ENGINE ──────────────────────────────────
+const _ddUnits = {};  // id → [{value, label}]
+
+function ddBuild(id, units, placeholder) {
+  _ddUnits[id] = units;
+  const list = document.getElementById(id + "-list");
+  const hidden = document.getElementById(id);
+  list.innerHTML = "";
+  if (!units.length) {
+    list.innerHTML = '<div class="unit-no-results">No units found</div>';
+    return;
+  }
+  units.forEach(u => {
+    const div = document.createElement("div");
+    div.className = "unit-option" + (hidden.value === u ? " selected" : "");
+    div.textContent = u;
+    div.onclick = () => ddSelect(id, u);
+    list.appendChild(div);
+  });
+}
+
+function ddSelect(id, value) {
+  document.getElementById(id).value = value;
+  document.getElementById(id + "-label").textContent = value;
+  document.getElementById(id + "-label").style.color = "";
+  document.getElementById(id + "-display").classList.remove("open");
+  document.getElementById(id + "-panel").classList.remove("open");
+  document.getElementById(id + "-search").value = "";
+  ddFilter(id, "");
+  // Update selected styling
+  document.querySelectorAll("#" + id + "-list .unit-option").forEach(el => {
+    el.classList.toggle("selected", el.textContent === value);
+  });
+  // Trigger downstream logic
+  if (id === "f-unit") { /* value already set via hidden input */ }
+}
+
+function ddToggle(id) {
+  const panel   = document.getElementById(id + "-panel");
+  const display = document.getElementById(id + "-display");
+  const isOpen  = panel.classList.contains("open");
+  // Close all others first
+  document.querySelectorAll(".unit-dropdown-panel.open").forEach(p => p.classList.remove("open"));
+  document.querySelectorAll(".unit-selected.open").forEach(d => d.classList.remove("open"));
+  if (!isOpen) {
+    panel.classList.add("open");
+    display.classList.add("open");
+    setTimeout(() => document.getElementById(id + "-search")?.focus(), 50);
+  }
+}
+
+function ddFilter(id, query) {
+  const q    = query.trim().toLowerCase();
+  const list = document.getElementById(id + "-list");
+  const cur  = document.getElementById(id).value;
+  let any    = false;
+  list.querySelectorAll(".unit-option").forEach(el => {
+    const match = !q || el.textContent.toLowerCase().includes(q);
+    el.style.display = match ? "" : "none";
+    if (match) any = true;
+  });
+  let noRes = list.querySelector(".unit-no-results");
+  if (!any) {
+    if (!noRes) { noRes = document.createElement("div"); noRes.className="unit-no-results"; list.appendChild(noRes); }
+    noRes.textContent = `No units match "${query}"`;
+    noRes.style.display = "";
+  } else if (noRes) {
+    noRes.style.display = "none";
+  }
+}
+
+// Close dropdown when tapping outside
+document.addEventListener("click", e => {
+  if (!e.target.closest(".unit-dropdown")) {
+    document.querySelectorAll(".unit-dropdown-panel.open").forEach(p => p.classList.remove("open"));
+    document.querySelectorAll(".unit-selected.open").forEach(d => d.classList.remove("open"));
+  }
+});
 
 function toast(msg,type){
   const t=document.getElementById("toast");
