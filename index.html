@@ -442,7 +442,6 @@ const MONTH_DBS = {
   "June":  "352c90a9c00781c395faed49f5f8f48e",
 };
 
-// ── FIXED: Content-Type header added ──
 async function notionQuery(dbId, body) {
   const url = WORKER + "?url=" + encodeURIComponent("https://api.notion.com/v1/databases/" + dbId + "/query");
   const r = await fetch(url, {
@@ -453,7 +452,6 @@ async function notionQuery(dbId, body) {
   return r.json();
 }
 
-// ── FIXED: Content-Type header added ──
 async function notionCreate(dbId, props) {
   const url = WORKER + "?url=" + encodeURIComponent("https://api.notion.com/v1/pages");
   const r = await fetch(url, {
@@ -840,7 +838,6 @@ function renderUnitDash(unit,monthName,year,monthIdx,daysInMonth,rows) {
       else if(mid)   ds[d]={cls:"booked",r};
     }
   });
-  // Only count/show reservations that CHECK IN this month (not carryovers from prev month)
   const monthRows=rows.filter(r=>{ const d=new Date(r.ci+"T00:00:00"); return d.getMonth()===monthIdx&&d.getFullYear()===year; });
   const totEgp=monthRows.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
   const totUsd=monthRows.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
@@ -989,11 +986,30 @@ function renderBrief(todayStr,checkins,checkouts,occupied,available,nextCheckin,
   h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot" style="background:#a78bfa"></div><span style="color:#a78bfa">Currently Occupied</span><span class="cnt-badge">${occupied.length}</span></div>`;
   if(!occupied.length) h+='<div class="empty-state"><span class="empty-icon">🏠</span>No units currently occupied</div>';
   else occupied.forEach(r=>{ const daysLeft=r.co?Math.round((new Date(r.co)-new Date())/86400000):"?"; h+=`<div class="res-card" style="border-left:3px solid #a78bfa"><div class="card-unit">${r.unit}</div><div class="card-guest">${r.guest}${r.source?" · "+r.source:""}</div><div class="card-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Checkout ${r.co?fmtD(r.co):"?"} · ${daysLeft} day${daysLeft!==1?"s":""} left</div></div>`; });
+
+  // ── AVAILABLE TONIGHT — updated to show full date range + nights free ──
   h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot" style="background:var(--success)"></div><span style="color:var(--success)">Available Tonight</span><span class="cnt-badge">${available.length}</span></div>`;
   if(!available.length) h+='<div class="empty-state"><span class="empty-icon">🔑</span>All units occupied</div>';
   else {
     h+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 15px">`;
-    available.forEach((u,i)=>{ const nextCi=nextCheckin[u]; const availTill=nextCi?`<span style="font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0">until ${fmtD(nextCi)}</span>`:`<span style="font-size:11px;color:var(--success);margin-left:auto;flex-shrink:0">No upcoming booking</span>`; h+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;${i<available.length-1?"border-bottom:1px solid var(--border)":""}"><div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div><div style="font-size:13px;color:var(--text);flex:1">${u}</div>${availTill}</div>`; });
+    available.forEach((u,i)=>{
+      const nextCi=nextCheckin[u];
+      const nights=nextCi?Math.round((new Date(nextCi+"T00:00:00")-new Date(todayStr+"T00:00:00"))/86400000):null;
+      const availInfo=nextCi
+        ?`<div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--muted);white-space:nowrap">${fmtD(todayStr)} → ${fmtD(nextCi)}</div>
+            <div style="font-size:10px;color:var(--success);margin-top:2px;text-align:right">${nights} night${nights!==1?'s':''} free</div>
+          </div>`
+        :`<div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--success);white-space:nowrap">From ${fmtD(todayStr)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;text-align:right">No upcoming booking</div>
+          </div>`;
+      h+=`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;${i<available.length-1?"border-bottom:1px solid var(--border)":""}">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+            <div style="font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u}</div>
+            ${availInfo}
+          </div>`;
+    });
     h+=`</div>`;
   }
   document.getElementById("brief-body").innerHTML=h;
@@ -1063,7 +1079,6 @@ function pickMod(cur) {
   document.getElementById("mod-usd").classList.toggle("on",cur==="USD");
 }
 
-// ── FIXED: Content-Type header added ──
 async function cancelRes() {
   if(!foundPageId) return;
   if(!confirm("Delete this reservation from Notion?")) return;
@@ -1087,7 +1102,6 @@ async function cancelRes() {
   } catch(e){ toast("Network error","err"); }
 }
 
-// ── FIXED: Content-Type header added ──
 async function saveModify() {
   if(!foundPageId) return;
   const ci=document.getElementById("mod-ci").value;
@@ -1122,9 +1136,8 @@ async function saveModify() {
   btn.disabled=false; btn.textContent="Save Changes →";
 }
 
-
 // ── SEARCHABLE DROPDOWN ENGINE ──────────────────────────────────
-const _ddUnits = {};  // id → [{value, label}]
+const _ddUnits = {};
 
 function ddBuild(id, units, placeholder) {
   _ddUnits[id] = units;
@@ -1152,19 +1165,15 @@ function ddSelect(id, value) {
   document.getElementById(id + "-panel").classList.remove("open");
   document.getElementById(id + "-search").value = "";
   ddFilter(id, "");
-  // Update selected styling
   document.querySelectorAll("#" + id + "-list .unit-option").forEach(el => {
     el.classList.toggle("selected", el.textContent === value);
   });
-  // Trigger downstream logic
-  if (id === "f-unit") { /* value already set via hidden input */ }
 }
 
 function ddToggle(id) {
   const panel   = document.getElementById(id + "-panel");
   const display = document.getElementById(id + "-display");
   const isOpen  = panel.classList.contains("open");
-  // Close all others first
   document.querySelectorAll(".unit-dropdown-panel.open").forEach(p => p.classList.remove("open"));
   document.querySelectorAll(".unit-selected.open").forEach(d => d.classList.remove("open"));
   if (!isOpen) {
@@ -1177,7 +1186,6 @@ function ddToggle(id) {
 function ddFilter(id, query) {
   const q    = query.trim().toLowerCase();
   const list = document.getElementById(id + "-list");
-  const cur  = document.getElementById(id).value;
   let any    = false;
   list.querySelectorAll(".unit-option").forEach(el => {
     const match = !q || el.textContent.toLowerCase().includes(q);
@@ -1194,7 +1202,6 @@ function ddFilter(id, query) {
   }
 }
 
-// Close dropdown when tapping outside
 document.addEventListener("click", e => {
   if (!e.target.closest(".unit-dropdown")) {
     document.querySelectorAll(".unit-dropdown-panel.open").forEach(p => p.classList.remove("open"));
