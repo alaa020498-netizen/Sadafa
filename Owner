@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<title>Sadafa · Owner View</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1c;--border:#282828;
+  --accent:#c9a84c;--accent2:#e8c97a;--text:#f0ede8;--muted:#6b6b70;
+  --success:#4caf82;--danger:#e05c5c;--blue:#4a9fd4;--purple:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+
+/* ── HEADER ── */
+.header{background:rgba(10,10,10,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.header-logo{font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent);letter-spacing:.05em}
+.header-badge{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
+
+/* ── LAYOUT ── */
+.wrap{padding:20px 16px 60px;max-width:520px;margin:0 auto}
+
+/* ── UNIT HERO ── */
+.unit-hero{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.unit-hero::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.unit-name{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1.2;margin-bottom:4px}
+.unit-sub{font-size:12px;color:var(--muted)}
+
+/* ── MONTH NAV ── */
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.month-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)}
+.nav-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.nav-btn:active{border-color:var(--accent);color:var(--accent)}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:14px;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.gold::before{background:var(--accent)}
+.kpi.blue::before{background:var(--blue)}
+.kpi.green::before{background:var(--success)}
+.kpi.gray::before{background:#444}
+.kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:18px;font-weight:700;line-height:1;margin-bottom:2px}
+.kpi.gold .kpi-val{color:var(--accent2)}
+.kpi.blue .kpi-val{color:var(--blue)}
+.kpi.green .kpi-val{color:var(--success)}
+.kpi.gray .kpi-val{color:var(--muted)}
+.kpi-sub{font-size:10px;color:var(--muted)}
+
+/* ── CALENDAR ── */
+.cal-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dn{text-align:center;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:3px 0;margin-bottom:3px}
+.cal-day{aspect-ratio:1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+.cal-day.empty{background:transparent}
+.cal-day.avail{background:var(--surface2);color:var(--muted)}
+.cal-day.booked{background:rgba(201,168,76,.18);color:var(--accent2);border:1px solid rgba(201,168,76,.25)}
+.cal-day.cin{background:rgba(76,175,130,.2);color:var(--success);border:1px solid rgba(76,175,130,.3)}
+.cal-day.cout{background:rgba(224,92,92,.15);color:var(--danger);border:1px solid rgba(224,92,92,.25)}
+.cal-day.tday{box-shadow:0 0 0 2px var(--accent)}
+.cal-day-n{font-size:11px;font-weight:600;line-height:1}
+.cal-day-dot{width:3px;height:3px;border-radius:50%;background:currentColor;margin-top:2px}
+
+/* ── LEGEND ── */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── SECTION LABEL ── */
+.sec-label{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;margin-top:20px}
+.sdot{width:7px;height:7px;border-radius:50%}
+
+/* ── RESERVATION CARD ── */
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px;border-left:3px solid var(--accent)}
+.res-dates{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+.res-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+.src-pip{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.res-price{font-size:13px;font-weight:700}
+.res-price.egp{color:var(--accent2)}
+.res-price.usd{color:var(--blue)}
+
+/* ── AVAILABILITY WINDOWS ── */
+.avail-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px;border-left:3px solid var(--success)}
+.avail-window{display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12px}
+.avail-window:not(:last-child){border-bottom:1px solid var(--border)}
+
+/* ── STATES ── */
+.spin{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:24px 0;color:var(--muted);font-size:13px}
+.empty-icon{font-size:28px;display:block;margin-bottom:8px}
+.error-box{background:rgba(224,92,92,.07);border:1px solid rgba(224,92,92,.2);border-radius:12px;padding:16px;text-align:center;color:var(--danger);font-size:13px;line-height:1.6;margin-top:40px}
+
+/* ── POWERED BY ── */
+.powered{text-align:center;font-size:10px;color:var(--muted);margin-top:32px;letter-spacing:.05em}
+.powered span{color:var(--accent);font-family:'DM Serif Display',serif}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Sadafa</div>
+  <div class="header-badge">Owner View</div>
+</div>
+
+<div class="wrap">
+  <div id="main-body">
+    <div class="spin"></div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px">Loading your dashboard…</p>
+  </div>
+</div>
+
+<script>
+const WORKER = "https://blue-unit-32c2.alaa020498.workers.dev";
+
+const MONTH_DBS = {
+  "April": "b7dc90a9c0078392a77a0124767bd463",
+  "May":   "350c90a9c007818bbacbd1fa065d5091",
+  "June":  "352c90a9c00781c395faed49f5f8f48e",
+};
+
+// ── Read unit from URL ──
+const params  = new URLSearchParams(window.location.search);
+const UNIT    = params.get("unit") ? decodeURIComponent(params.get("unit")) : null;
+
+// ── State ──
+let currentYear, currentMonth;
+
+// ── Helpers ──
+function fmt(d){ return d.toISOString().split("T")[0]; }
+function fmtD(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+function fmtFull(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); }
+function nts(ci,co){ return co?Math.round((new Date(co+"T00:00:00")-new Date(ci+"T00:00:00"))/86400000):0; }
+
+async function notionQuery(dbId, body) {
+  const url = WORKER + "?url=" + encodeURIComponent("https://api.notion.com/v1/databases/" + dbId + "/query");
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+// ── Fetch reservations for a unit across relevant months ──
+async function fetchUnitReservations(unit, monthIdx, year) {
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const mStart = new Date(year, monthIdx, 1);
+  const mEnd   = new Date(year, monthIdx+1, 0);
+  const rows   = [];
+
+  // Query months that could overlap
+  const relevant = Object.entries(MONTH_DBS).filter(([m]) => {
+    const mi = monthNames.indexOf(m);
+    return mi >= 0 && (mi === monthIdx || mi === monthIdx-1 || mi === monthIdx+1);
+  });
+  if (!relevant.length) Object.entries(MONTH_DBS).forEach(e => relevant.push(e));
+
+  await Promise.all(relevant.map(async ([m, dbId]) => {
+    try {
+      const data = await notionQuery(dbId, {
+        filter: { property: "Listing Name", select: { equals: unit } },
+        page_size: 100
+      });
+      (data.results||[]).forEach(p => {
+        const pr = p.properties||{};
+        const ci = pr["Check-in Date"]?.date?.start||"";
+        const co = pr["Check-out Date"]?.date?.start||"";
+        if (!ci) return;
+        const ciD = new Date(ci+"T00:00:00");
+        const coD = co ? new Date(co+"T00:00:00") : ciD;
+        if (ciD <= mEnd && coD >= mStart) {
+          rows.push({
+            ci, co,
+            price:  pr["Total Price"]?.number||0,
+            cur:    pr["Currency"]?.select?.name||"EGP",
+            source: pr["Booking Source"]?.select?.name||"—",
+          });
+        }
+      });
+    } catch(e) {}
+  }));
+
+  // Deduplicate by ci
+  const seen = new Set();
+  return rows.filter(r => { if(seen.has(r.ci)) return false; seen.add(r.ci); return true; })
+             .sort((a,b) => a.ci.localeCompare(b.ci));
+}
+
+// ── Fetch ALL future reservations for availability windows ──
+async function fetchAllFutureReservations(unit) {
+  const todayStr = fmt(new Date());
+  const rows = [];
+  await Promise.all(Object.entries(MONTH_DBS).map(async ([m, dbId]) => {
+    try {
+      const data = await notionQuery(dbId, {
+        filter: { and: [
+          { property: "Listing Name", select: { equals: unit } },
+          { property: "Check-in Date", date: { on_or_after: todayStr } }
+        ]},
+        page_size: 100
+      });
+      (data.results||[]).forEach(p => {
+        const pr = p.properties||{};
+        const ci = pr["Check-in Date"]?.date?.start||"";
+        const co = pr["Check-out Date"]?.date?.start||"";
+        if (ci) rows.push({ ci, co, price: pr["Total Price"]?.number||0, cur: pr["Currency"]?.select?.name||"EGP", source: pr["Booking Source"]?.select?.name||"—" });
+      });
+    } catch(e) {}
+  }));
+  const seen = new Set();
+  return rows.filter(r => { if(seen.has(r.ci)) return false; seen.add(r.ci); return true; })
+             .sort((a,b) => a.ci.localeCompare(b.ci));
+}
+
+// ── Render calendar ──
+function renderCalendar(rows, monthIdx, year) {
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const daysInMonth = new Date(year, monthIdx+1, 0).getDate();
+  const today = new Date();
+  const ds = {};
+
+  rows.forEach(r => {
+    const ciD = new Date(r.ci+"T00:00:00");
+    const coD = r.co ? new Date(r.co+"T00:00:00") : ciD;
+    for(let d=1; d<=daysInMonth; d++) {
+      const dt = new Date(year, monthIdx, d);
+      const isCi = ciD.getTime()===dt.getTime();
+      const isCo = coD.getTime()===dt.getTime();
+      const mid  = dt>=ciD && dt<coD && !isCi;
+      if(isCi && isCo) ds[d]={cls:"both"};
+      else if(isCi)    ds[d]={cls:"cin"};
+      else if(isCo)    ds[d]={cls:"cout"};
+      else if(mid)     ds[d]={cls:"booked"};
+    }
+  });
+
+  const firstDay = new Date(year, monthIdx, 1).getDay();
+  const dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  let cal = dayNames.map(d=>`<div class="cal-dn">${d}</div>`).join("");
+  for(let i=0; i<firstDay; i++) cal+=`<div class="cal-day empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++) {
+    const info = ds[d];
+    const cls  = info ? info.cls : "avail";
+    const isToday = today.getDate()===d && today.getMonth()===monthIdx && today.getFullYear()===year;
+    cal += `<div class="cal-day ${cls}${isToday?" tday":""}">
+      <div class="cal-day-n">${d}</div>
+      ${info?`<div class="cal-day-dot"></div>`:""}
+    </div>`;
+  }
+  return cal;
+}
+
+// ── Source color ──
+function srcColor(s){ return {Airbnb:"#ff5a5f","Booking.com":"#4a9fd4",Offline:"#4caf82",Owner:"#a78bfa"}[s]||"#6b6b70"; }
+function srcIcon(s){ return {Airbnb:"✈","Booking.com":"🏨",Offline:"🤝",Owner:"👤"}[s]||"📋"; }
+
+// ── Main render ──
+async function render() {
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+  const monthLabel  = monthNames[currentMonth]+" "+currentYear;
+  const todayStr    = fmt(new Date());
+
+  // Fetch data
+  const [rows, futureRows] = await Promise.all([
+    fetchUnitReservations(UNIT, currentMonth, currentYear),
+    fetchAllFutureReservations(UNIT)
+  ]);
+
+  // KPIs — only check-ins this month
+  const monthRows = rows.filter(r => {
+    const d = new Date(r.ci+"T00:00:00");
+    return d.getMonth()===currentMonth && d.getFullYear()===currentYear;
+  });
+  const totEgp   = monthRows.filter(r=>r.cur==="EGP").reduce((s,r)=>s+r.price,0);
+  const totUsd   = monthRows.filter(r=>r.cur==="USD").reduce((s,r)=>s+r.price,0);
+  const totNights= monthRows.reduce((s,r)=>s+nts(r.ci,r.co),0);
+  const occ      = Math.round(totNights/daysInMonth*100);
+
+  // Calendar
+  const cal = renderCalendar(rows, currentMonth, currentYear);
+
+  // Upcoming reservations (future only, no guest name)
+  const upcoming = futureRows.filter(r => r.ci >= todayStr);
+
+  // Availability windows
+  const windows = [];
+  let ws = todayStr;
+  futureRows.forEach(b => {
+    if(b.ci > ws) {
+      const n = Math.round((new Date(b.ci+"T00:00:00")-new Date(ws+"T00:00:00"))/86400000);
+      if(n > 0) windows.push({from:ws, to:b.ci, nights:n});
+    }
+    if(b.co && b.co > ws) ws = b.co;
+    else if(b.ci > ws) ws = b.ci;
+  });
+  windows.push({from:ws, to:null, nights:null});
+
+  // ── Build HTML ──
+  let h = `
+    <div class="unit-hero">
+      <div class="unit-name">${UNIT}</div>
+      <div class="unit-sub">Owner Dashboard · Read Only</div>
+    </div>
+
+    <div class="month-nav">
+      <button class="nav-btn" onclick="prevMonth()">‹</button>
+      <div class="month-title">${monthLabel}</div>
+      <button class="nav-btn" onclick="nextMonth()">›</button>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi gold">
+        <div class="kpi-lbl">Revenue EGP</div>
+        <div class="kpi-val">${totEgp>0?"EGP "+totEgp.toLocaleString():"—"}</div>
+        <div class="kpi-sub">${monthLabel}</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-lbl">Revenue USD</div>
+        <div class="kpi-val">${totUsd>0?"$"+totUsd.toLocaleString():"—"}</div>
+        <div class="kpi-sub">${monthLabel}</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-lbl">Occupancy</div>
+        <div class="kpi-val">${occ}%</div>
+        <div class="kpi-sub">${totNights} nights booked</div>
+      </div>
+      <div class="kpi gray">
+        <div class="kpi-lbl">Bookings</div>
+        <div class="kpi-val">${monthRows.length}</div>
+        <div class="kpi-sub">${monthLabel}</div>
+      </div>
+    </div>
+
+    <div class="cal-wrap">
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:rgba(76,175,130,.5)"></div>Check-in</div>
+        <div class="leg"><div class="leg-dot" style="background:rgba(224,92,92,.4)"></div>Check-out</div>
+        <div class="leg"><div class="leg-dot" style="background:rgba(201,168,76,.4)"></div>Booked</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--surface2)"></div>Available</div>
+      </div>
+      <div class="cal-grid">${cal}</div>
+    </div>`;
+
+  // Availability windows section
+  h += `<div class="sec-label"><div class="sdot" style="background:var(--success)"></div><span style="color:var(--success)">Availability Windows</span></div>`;
+  h += `<div class="avail-card">`;
+  windows.forEach((w,i) => {
+    if(w.to) {
+      h += `<div class="avail-window">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+        <span style="color:var(--text);font-weight:600">${fmtD(w.from)} → ${fmtD(w.to)}</span>
+        <span style="color:var(--success);font-size:11px;">${w.nights} night${w.nights!==1?'s':''} free</span>
+      </div>`;
+    } else {
+      h += `<div class="avail-window">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+        <span style="color:var(--success);font-weight:600">From ${fmtD(w.from)}</span>
+        <span style="color:var(--muted);font-size:11px">No upcoming booking</span>
+      </div>`;
+    }
+  });
+  h += `</div>`;
+
+  // Upcoming reservations — NO guest names
+  h += `<div class="sec-label"><div class="sdot" style="background:var(--accent)"></div><span style="color:var(--accent)">Upcoming Reservations</span></div>`;
+  if(!upcoming.length) {
+    h += `<div class="empty"><span class="empty-icon">📅</span>No upcoming reservations</div>`;
+  } else {
+    upcoming.forEach(r => {
+      const n = nts(r.ci, r.co);
+      h += `<div class="res-card" style="border-left-color:${srcColor(r.source)}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div>
+            <div class="res-dates">${fmtFull(r.ci)} → ${r.co?fmtFull(r.co):"?"}</div>
+            <div class="res-meta">
+              <div class="src-pip" style="background:${srcColor(r.source)}"></div>
+              <span>${srcIcon(r.source)} ${r.source}</span>
+              <span>·</span>
+              <span>${n} night${n!==1?'s':''}</span>
+            </div>
+          </div>
+          <div class="res-price ${r.cur==="EGP"?"egp":"usd"}" style="flex-shrink:0">
+            ${r.cur==="EGP"?"EGP "+r.price.toLocaleString():"$"+r.price.toLocaleString()}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  h += `<div class="powered">Powered by <span>Sadafa</span></div>`;
+
+  document.getElementById("main-body").innerHTML = h;
+}
+
+function prevMonth() {
+  currentMonth--;
+  if(currentMonth < 0){ currentMonth=11; currentYear--; }
+  document.getElementById("main-body").innerHTML='<div class="spin"></div>';
+  render();
+}
+function nextMonth() {
+  currentMonth++;
+  if(currentMonth > 11){ currentMonth=0; currentYear++; }
+  document.getElementById("main-body").innerHTML='<div class="spin"></div>';
+  render();
+}
+
+// ── Init ──
+(function init(){
+  if(!UNIT){
+    document.getElementById("main-body").innerHTML=`
+      <div class="error-box">
+        <div style="font-size:28px;margin-bottom:10px">🔗</div>
+        <div style="font-weight:600;margin-bottom:6px">No unit specified</div>
+        <div style="color:var(--muted)">This link is missing the unit parameter.<br>Please contact your property manager.</div>
+      </div>`;
+    return;
+  }
+  const now = new Date();
+  currentMonth = now.getMonth();
+  currentYear  = now.getFullYear();
+  render();
+})();
+</script>
+</body>
+</html>
