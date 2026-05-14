@@ -952,7 +952,7 @@ async function loadBrief() {
   document.getElementById("brief-date-label").textContent=today.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
   document.getElementById("brief-body").innerHTML='<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p>';
   const checkins=[],checkouts=[],occupied=[],errors=[];
-  const nextCheckin={};
+  const futureBookings={};
 
   await Promise.all(Object.entries(MONTH_DBS).map(async ([month,dbId]) => {
     try {
@@ -963,7 +963,7 @@ async function loadBrief() {
       const rocc=await notionQuery(dbId,{filter:{and:[{property:"Check-in Date",date:{on_or_before:todayStr}},{property:"Check-out Date",date:{after:todayStr}}]},page_size:100});
       (rocc.results||[]).forEach(p=>{ const pr=p.properties||{}; const unit=pr["Listing Name"]?.select?.name||"Unknown"; occupied.push({unit,guest:pr["Guest Name"]?.rich_text?.[0]?.plain_text||"—",co:pr["Check-out Date"]?.date?.start||"",source:pr["Booking Source"]?.select?.name||""}); });
       const rnext=await notionQuery(dbId,{filter:{property:"Check-in Date",date:{after:todayStr}},page_size:100});
-      (rnext.results||[]).forEach(p=>{ const pr=p.properties||{}; const unit=pr["Listing Name"]?.select?.name||""; const ci=pr["Check-in Date"]?.date?.start||""; if(unit&&ci&&(!nextCheckin[unit]||ci<nextCheckin[unit])) nextCheckin[unit]=ci; });
+      (rnext.results||[]).forEach(p=>{ const pr=p.properties||{}; const unit=pr["Listing Name"]?.select?.name||""; const ci=pr["Check-in Date"]?.date?.start||""; const co=pr["Check-out Date"]?.date?.start||""; if(unit&&ci){ if(!futureBookings[unit]) futureBookings[unit]=[]; futureBookings[unit].push({ci,co}); } });
     } catch(e){ errors.push(month+": "+e.message); }
   }));
 
@@ -971,10 +971,10 @@ async function loadBrief() {
   let unitsList=unitsCache||[];
   if(!unitsList.length){ try{ unitsList=await fetchUnits(); }catch(e){} }
   const available=unitsList.filter(u=>!occupiedUnits.has(u));
-  renderBrief(todayStr,checkins,checkouts,occupied,available,nextCheckin,errors);
+  renderBrief(todayStr,checkins,checkouts,occupied,available,futureBookings,errors);
 }
 
-function renderBrief(todayStr,checkins,checkouts,occupied,available,nextCheckin,errors) {
+function renderBrief(todayStr,checkins,checkouts,occupied,available,futureBookings,errors) {
   let h="";
   if(errors.length) h+=`<div class="warn-box">⚠ ${errors.join("<br>")}</div>`;
   h+=`<div class="sec-label"><div class="sdot sdot-in"></div><span style="color:var(--in)">Check-ins Today</span><span class="cnt-badge">${checkins.length}</span></div>`;
@@ -987,28 +987,51 @@ function renderBrief(todayStr,checkins,checkouts,occupied,available,nextCheckin,
   if(!occupied.length) h+='<div class="empty-state"><span class="empty-icon">🏠</span>No units currently occupied</div>';
   else occupied.forEach(r=>{ const daysLeft=r.co?Math.round((new Date(r.co)-new Date())/86400000):"?"; h+=`<div class="res-card" style="border-left:3px solid #a78bfa"><div class="card-unit">${r.unit}</div><div class="card-guest">${r.guest}${r.source?" · "+r.source:""}</div><div class="card-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Checkout ${r.co?fmtD(r.co):"?"} · ${daysLeft} day${daysLeft!==1?"s":""} left</div></div>`; });
 
-  // ── AVAILABLE TONIGHT — updated to show full date range + nights free ──
+  // ── AVAILABLE TONIGHT — shows ALL availability windows per unit ──
   h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot" style="background:var(--success)"></div><span style="color:var(--success)">Available Tonight</span><span class="cnt-badge">${available.length}</span></div>`;
   if(!available.length) h+='<div class="empty-state"><span class="empty-icon">🔑</span>All units occupied</div>';
   else {
     h+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 15px">`;
     available.forEach((u,i)=>{
-      const nextCi=nextCheckin[u];
-      const nights=nextCi?Math.round((new Date(nextCi+"T00:00:00")-new Date(todayStr+"T00:00:00"))/86400000):null;
-      const availInfo=nextCi
-        ?`<div style="text-align:right;flex-shrink:0">
-            <div style="font-size:11px;color:var(--muted);white-space:nowrap">${fmtD(todayStr)} → ${fmtD(nextCi)}</div>
-            <div style="font-size:10px;color:var(--success);margin-top:2px;text-align:right">${nights} night${nights!==1?'s':''} free</div>
-          </div>`
-        :`<div style="text-align:right;flex-shrink:0">
-            <div style="font-size:11px;color:var(--success);white-space:nowrap">From ${fmtD(todayStr)}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;text-align:right">No upcoming booking</div>
+      // Get all future bookings for this unit, deduplicated and sorted
+      const bookings=(futureBookings[u]||[])
+        .filter((b,idx,arr)=>arr.findIndex(x=>x.ci===b.ci)===idx)
+        .sort((a,b)=>a.ci.localeCompare(b.ci));
+
+      // Calculate all availability windows
+      const windows=[];
+      let ws=todayStr;
+      bookings.forEach(b=>{
+        if(b.ci>ws){
+          const n=Math.round((new Date(b.ci+"T00:00:00")-new Date(ws+"T00:00:00"))/86400000);
+          if(n>0) windows.push({from:ws,to:b.ci,nights:n});
+        }
+        if(b.co&&b.co>ws) ws=b.co;
+        else if(b.ci>ws) ws=b.ci;
+      });
+      // Always add the final open-ended window
+      windows.push({from:ws,to:null,nights:null});
+
+      // Build HTML for all windows
+      const windowsHtml=windows.map((w,wi)=>{
+        if(w.to){
+          return `<div style="display:flex;align-items:center;gap:5px;margin-top:${wi===0?'3':'5'}px">
+            <div style="width:3px;height:3px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+            <span style="font-size:10.5px;color:var(--muted)">${fmtD(w.from)} → ${fmtD(w.to)}</span>
+            <span style="font-size:10px;color:var(--success);font-weight:600">${w.nights} night${w.nights!==1?'s':''} free</span>
           </div>`;
-      h+=`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;${i<available.length-1?"border-bottom:1px solid var(--border)":""}">
-            <div style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
-            <div style="font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u}</div>
-            ${availInfo}
+        } else {
+          return `<div style="display:flex;align-items:center;gap:5px;margin-top:${wi===0?'3':'5'}px">
+            <div style="width:3px;height:3px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+            <span style="font-size:10.5px;color:var(--success)">From ${fmtD(w.from)} · No upcoming booking</span>
           </div>`;
+        }
+      }).join('');
+
+      h+=`<div style="padding:9px 0;${i<available.length-1?"border-bottom:1px solid var(--border)":""}">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${u}</div>
+        ${windowsHtml}
+      </div>`;
     });
     h+=`</div>`;
   }
