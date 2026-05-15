@@ -286,8 +286,11 @@ async function render() {
   // Calendar
   const cal = renderCalendar(rows, currentMonth, currentYear);
 
-  // Upcoming reservations (future only, no guest name)
-  const upcoming = futureRows.filter(r => r.ci >= todayStr);
+  // All reservations for the selected month (no guest name)
+  const upcoming = rows.filter(r => {
+    const d = new Date(r.ci+"T00:00:00");
+    return d.getMonth()===monthIdx && d.getFullYear()===year;
+  }).sort((a,b) => a.ci.localeCompare(b.ci));
 
   // Availability windows
   const windows = [];
@@ -369,9 +372,9 @@ async function render() {
   h += `</div>`;
 
   // Upcoming reservations — NO guest names
-  h += `<div class="sec-label"><div class="sdot" style="background:var(--accent)"></div><span style="color:var(--accent)">Upcoming Reservations</span></div>`;
+  h += `<div class="sec-label"><div class="sdot" style="background:var(--accent)"></div><span style="color:var(--accent)">Reservations — ${monthLabel}</span></div>`;
   if(!upcoming.length) {
-    h += `<div class="empty"><span class="empty-icon">📅</span>No upcoming reservations</div>`;
+    h += `<div class="empty"><span class="empty-icon">📅</span>No reservations this month</div>`;
   } else {
     upcoming.forEach(r => {
       const n = nts(r.ci, r.co);
