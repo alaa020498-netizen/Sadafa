@@ -262,16 +262,22 @@ function srcIcon(s){ return {Airbnb:"✈","Booking.com":"🏨",Offline:"🤝",Ow
 
 // ── Main render ──
 async function render() {
+  try {
   const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
   const monthLabel  = monthNames[currentMonth]+" "+currentYear;
   const todayStr    = fmt(new Date());
 
-  // Fetch data
-  const [rows, futureRows] = await Promise.all([
+  // Fetch data with timeout
+  const fetchWithTimeout = (promise, ms=15000) => Promise.race([
+    promise,
+    new Promise((_,reject) => setTimeout(()=>reject(new Error("Request timed out")),ms))
+  ]);
+
+  const [rows, futureRows] = await fetchWithTimeout(Promise.all([
     fetchUnitReservations(UNIT, currentMonth, currentYear),
     fetchAllFutureReservations(UNIT)
-  ]);
+  ]));
 
   // KPIs — only check-ins this month
   const monthRows = rows.filter(r => {
@@ -400,6 +406,15 @@ async function render() {
   h += `<div class="powered">Powered by <span>Sadafa</span></div>`;
 
   document.getElementById("main-body").innerHTML = h;
+  } catch(e) {
+    document.getElementById("main-body").innerHTML = `
+      <div class="error-box">
+        <div style="font-size:28px;margin-bottom:10px">⚠️</div>
+        <div style="font-weight:600;margin-bottom:6px">Failed to load dashboard</div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:14px">${e.message||"Unknown error"}</div>
+        <button onclick="render()" style="background:var(--accent);color:#0a0a0a;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Try Again</button>
+      </div>`;
+  }
 }
 
 function prevMonth() {
@@ -429,7 +444,34 @@ function nextMonth() {
   const now = new Date();
   currentMonth = now.getMonth();
   currentYear  = now.getFullYear();
-  render();
+
+  // Test worker connectivity first
+  const testDbId = Object.values(MONTH_DBS)[0];
+  const testUrl = WORKER + "?url=" + encodeURIComponent("https://api.notion.com/v1/databases/" + testDbId + "/query");
+  fetch(testUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ page_size: 1 })
+  }).then(r => r.json()).then(data => {
+    if (data.object === "error" || data.code) {
+      document.getElementById("main-body").innerHTML = `
+        <div class="error-box">
+          <div style="font-size:28px;margin-bottom:10px">🔌</div>
+          <div style="font-weight:600;margin-bottom:6px">Connection error</div>
+          <div style="color:var(--muted);font-size:12px">${data.message||"Cannot reach database. Please contact your property manager."}</div>
+        </div>`;
+    } else {
+      render();
+    }
+  }).catch(err => {
+    document.getElementById("main-body").innerHTML = `
+      <div class="error-box">
+        <div style="font-size:28px;margin-bottom:10px">🔌</div>
+        <div style="font-weight:600;margin-bottom:6px">Connection error</div>
+        <div style="color:var(--muted);font-size:12px">Cannot reach server. Check your internet connection.<br><br>
+        <button onclick="location.reload()" style="background:var(--accent);color:#0a0a0a;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Retry</button></div>
+      </div>`;
+  });
 })();
 </script>
 </body>
