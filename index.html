@@ -21,7 +21,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .nav-row1{display:flex;align-items:center;justify-content:space-between;padding:7px 16px;border-bottom:1px solid var(--border)}
 .nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);letter-spacing:.05em}
 .nav-date{font-size:10px;color:var(--muted)}
-.nav-tabs{display:flex;height:42px}
+.nav-tabs{display:flex;height:42px;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:none;transition:color .2s;letter-spacing:.05em;text-transform:uppercase;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;padding:0 2px}
 .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .nav-tab svg{width:13px;height:13px;flex-shrink:0}
@@ -180,6 +181,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
     <button class="nav-tab" onclick="show('unit')" id="tab-unit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Unit
+    </button>
+    <button class="nav-tab" onclick="show('owners')" id="tab-owners">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Links
     </button>
   </div>
 </nav>
@@ -431,6 +436,13 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   <div id="ud-body"></div>
 </div>
 
+<!-- OWNER LINKS SCREEN -->
+<div class="screen" id="screen-owners">
+  <p class="page-title">Owner Links</p>
+  <p class="page-sub">Share each link with the property owner</p>
+  <div id="owners-body"><div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading units…</p></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -522,6 +534,7 @@ function show(name) {
   if (name === "brief")  loadBrief();
   if (name === "hist")   loadHist();
   if (name === "unit")   initUnitDash();
+  if (name === "owners") loadOwnerLinks();
 }
 
 function pick(group, btn, value) {
@@ -1157,6 +1170,57 @@ async function saveModify() {
     } else { toast(res.message||"Failed to update","err"); }
   } catch(e){ toast("Network error","err"); }
   btn.disabled=false; btn.textContent="Save Changes →";
+}
+
+// ── OWNER BASE URL — change this to wherever you host owner.html ──
+const OWNER_BASE_URL = "owner.html";
+
+async function loadOwnerLinks() {
+  const body = document.getElementById("owners-body");
+  body.innerHTML = '<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading units…</p>';
+  const units = await fetchUnits();
+  if (!units.length) {
+    body.innerHTML = '<div class="empty-state"><span class="empty-icon">📭</span>No units found</div>';
+    return;
+  }
+  let h = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:var(--muted);line-height:1.6">
+    Tap any unit to copy its owner link. Send the link to the property owner — they can view their unit's calendar, revenue, and availability in real time.
+  </div>`;
+  units.forEach(u => {
+    const link = OWNER_BASE_URL + "?unit=" + encodeURIComponent(u);
+    h += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .18s;-webkit-tap-highlight-color:transparent"
+      onclick="copyOwnerLink('${link.replace(/'/g,"\'")}', this)"
+      id="link-${encodeURIComponent(u).replace(/%/g,'_')}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u}</div>
+        <div style="font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${link}</div>
+      </div>
+      <div style="flex-shrink:0;width:32px;height:32px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </div>
+    </div>`;
+  });
+  body.innerHTML = h;
+}
+
+function copyOwnerLink(link, el) {
+  const fullLink = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + link;
+  navigator.clipboard.writeText(fullLink).then(() => {
+    toast("✓ Link copied","ok");
+    el.style.borderColor = "var(--success)";
+    setTimeout(() => el.style.borderColor = "", 1200);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = fullLink;
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy");
+    document.body.removeChild(ta);
+    toast("✓ Link copied","ok");
+    el.style.borderColor = "var(--success)";
+    setTimeout(() => el.style.borderColor = "", 1200);
+  });
 }
 
 // ── SEARCHABLE DROPDOWN ENGINE ──────────────────────────────────
