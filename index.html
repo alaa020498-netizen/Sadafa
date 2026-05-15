@@ -998,7 +998,45 @@ function renderBrief(todayStr,checkins,checkouts,occupied,available,futureBookin
   else checkouts.forEach(r=>{ h+=`<div class="res-card out"><div class="card-unit">${r.unit}</div><div class="card-guest">${r.guest}</div><div class="card-meta">Checked in ${r.ci?fmtD(r.ci):"?"}</div></div>`; });
   h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot" style="background:#a78bfa"></div><span style="color:#a78bfa">Currently Occupied</span><span class="cnt-badge">${occupied.length}</span></div>`;
   if(!occupied.length) h+='<div class="empty-state"><span class="empty-icon">🏠</span>No units currently occupied</div>';
-  else occupied.forEach(r=>{ const daysLeft=r.co?Math.round((new Date(r.co)-new Date())/86400000):"?"; h+=`<div class="res-card" style="border-left:3px solid #a78bfa"><div class="card-unit">${r.unit}</div><div class="card-guest">${r.guest}${r.source?" · "+r.source:""}</div><div class="card-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Checkout ${r.co?fmtD(r.co):"?"} · ${daysLeft} day${daysLeft!==1?"s":""} left</div></div>`; });
+  else occupied.forEach(r=>{
+    const daysLeft=r.co?Math.round((new Date(r.co)-new Date())/86400000):"?";
+    // Calculate upcoming free windows starting from checkout date
+    const checkoutStr=r.co||"";
+    const unitFutureBookings=(futureBookings[r.unit]||[])
+      .filter((b,idx,arr)=>arr.findIndex(x=>x.ci===b.ci)===idx)
+      .sort((a,b)=>a.ci.localeCompare(b.ci));
+    const windows=[];
+    let ws=checkoutStr;
+    unitFutureBookings.forEach(b=>{
+      if(b.ci>ws){
+        const n=Math.round((new Date(b.ci+"T00:00:00")-new Date(ws+"T00:00:00"))/86400000);
+        if(n>0) windows.push({from:ws,to:b.ci,nights:n});
+      }
+      if(b.co&&b.co>ws) ws=b.co;
+      else if(b.ci>ws) ws=b.ci;
+    });
+    windows.push({from:ws,to:null,nights:null});
+    const windowsHtml=windows.map((w,wi)=>{
+      if(w.to){
+        return `<div style="display:flex;align-items:center;gap:5px;margin-top:4px">
+          <div style="width:3px;height:3px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+          <span style="font-size:10px;color:var(--muted)">${fmtD(w.from)} → ${fmtD(w.to)}</span>
+          <span style="font-size:10px;color:var(--success);font-weight:600">${w.nights} night${w.nights!==1?"s":""} free</span>
+        </div>`;
+      } else {
+        return `<div style="display:flex;align-items:center;gap:5px;margin-top:4px">
+          <div style="width:3px;height:3px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+          <span style="font-size:10px;color:var(--success)">Free from ${fmtD(w.from)} · No upcoming booking</span>
+        </div>`;
+      }
+    }).join("");
+    h+=`<div class="res-card" style="border-left:3px solid #a78bfa">
+      <div class="card-unit">${r.unit}</div>
+      <div class="card-guest">${r.guest}${r.source?" · "+r.source:""}</div>
+      <div class="card-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Checkout ${r.co?fmtD(r.co):"?"} · ${daysLeft} day${daysLeft!==1?"s":""} left</div>
+      ${checkoutStr?windowsHtml:""}
+    </div>`;
+  });
 
   // ── AVAILABLE TONIGHT — shows ALL availability windows per unit ──
   h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot" style="background:var(--success)"></div><span style="color:var(--success)">Available Tonight</span><span class="cnt-badge">${available.length}</span></div>`;
@@ -1173,7 +1211,7 @@ async function saveModify() {
 }
 
 // ── OWNER BASE URL — change this to wherever you host owner.html ──
-const OWNER_BASE_URL = "https://alaa020498-netizen.github.io/Sadafa/Owner.html";
+const OWNER_BASE_URL = "owner.html";
 
 async function loadOwnerLinks() {
   const body = document.getElementById("owners-body");
@@ -1204,13 +1242,14 @@ async function loadOwnerLinks() {
 }
 
 function copyOwnerLink(link, el) {
-  const fullLink = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + link;
+  // If OWNER_BASE_URL is already a full URL, use link as-is
+  const fullLink = link.startsWith("http") ? link
+    : window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + link;
   navigator.clipboard.writeText(fullLink).then(() => {
     toast("✓ Link copied","ok");
     el.style.borderColor = "var(--success)";
     setTimeout(() => el.style.borderColor = "", 1200);
   }).catch(() => {
-    // fallback
     const ta = document.createElement("textarea");
     ta.value = fullLink;
     ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
