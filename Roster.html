@@ -58,376 +58,176 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
-  .header-left h1 {
-    font-size: 38px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-
+  .header-left h1 { font-size: 38px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
   .header-left h1 span { color: var(--accent); }
 
-  .header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-  }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 
-  .legend {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    align-items: flex-end;
-  }
+  .legend { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
 
   .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--muted);
   }
 
-  .legend-dot {
-    width: 10px; height: 10px;
-    border-radius: 2px;
-  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
 
-  /* EDIT TOGGLE */
-  .edit-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .edit-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
-  .edit-status {
-    font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--muted);
-  }
-
+  .edit-status { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
   .edit-status.active { color: var(--accent); }
 
-  .btn-edit {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
+  .btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Syne', sans-serif;
+    font-size: 12px; font-weight: 600; padding: 7px 14px;
+    border-radius: 8px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: rgba(201,168,76,0.12); border-color: var(--accent); color: var(--accent); }
+
+  /* loading */
+  #loadingMsg {
+    text-align: center;
+    padding: 40px;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    font-weight: 600;
-    padding: 7px 14px;
+    color: var(--muted);
+  }
+
+  #errorMsg {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #f87171;
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.2);
     border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.04em;
+    margin-bottom: 16px;
   }
 
-  .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-edit.active { background: rgba(201,168,76,0.12); border-color: var(--accent); color: var(--accent); }
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
 
-  /* TABLE */
-  .table-wrap {
-    overflow-x: auto;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 760px;
-  }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
 
   thead tr:first-child th {
-    background: var(--header-bg);
-    padding: 14px 0 12px;
-    font-size: 10px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 500;
-    border-bottom: 1px solid var(--border);
-    text-align: center;
+    background: var(--header-bg); padding: 14px 0 12px;
+    font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted); font-family: 'JetBrains Mono', monospace;
+    font-weight: 500; border-bottom: 1px solid var(--border); text-align: center;
   }
-
-  thead tr:first-child th:first-child {
-    text-align: left;
-    padding-left: 16px;
-    width: 90px;
-  }
+  thead tr:first-child th:first-child { text-align: left; padding-left: 16px; width: 90px; }
 
   thead tr:nth-child(2) th {
-    background: var(--surface);
-    padding: 10px 6px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: var(--text);
-    border-bottom: 2px solid var(--accent);
-    text-align: center;
+    background: var(--surface); padding: 10px 6px; font-size: 13px;
+    font-weight: 700; letter-spacing: 0.04em; color: var(--text);
+    border-bottom: 2px solid var(--accent); text-align: center;
   }
-
   thead tr:nth-child(2) th:first-child {
-    text-align: left;
-    padding-left: 16px;
-    color: var(--muted);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    text-align: left; padding-left: 16px; color: var(--muted);
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
     font-family: 'JetBrains Mono', monospace;
   }
 
-  tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
   tbody tr:hover { background: rgba(255,255,255,0.02); }
   tbody tr.weekend { background: var(--weekend); }
   tbody tr.weekend:hover { background: rgba(255,255,255,0.015); }
 
   td.date-cell {
-    padding: 6px 8px 6px 16px;
-    font-family: 'JetBrains Mono', monospace;
-    vertical-align: middle;
-    white-space: nowrap;
+    padding: 6px 8px 6px 16px; font-family: 'JetBrains Mono', monospace;
+    vertical-align: middle; white-space: nowrap;
   }
-
-  .date-num {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text);
-    line-height: 1;
-  }
-
-  .date-day {
-    font-size: 9px;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
+  .date-num { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1; }
+  .date-day { font-size: 9px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
   .weekend .date-num { color: var(--muted); }
   .weekend .date-day { color: #444450; }
 
-  td.shift-cell {
-    padding: 5px 4px;
-    text-align: center;
-    vertical-align: middle;
-  }
+  td.shift-cell { padding: 5px 4px; text-align: center; vertical-align: middle; }
 
   .shift-badge {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    padding: 5px 8px;
-    min-width: 72px;
-    min-height: 44px;
-    border: 1px solid transparent;
-    font-family: 'JetBrains Mono', monospace;
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 6px; padding: 5px 8px; min-width: 72px; min-height: 44px;
+    border: 1px solid transparent; font-family: 'JetBrains Mono', monospace;
     transition: transform 0.1s, box-shadow 0.1s;
   }
-
   .shift-badge .shift-type {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    line-height: 1.2;
-    text-align: center;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; line-height: 1.2; text-align: center;
   }
 
-  .morning  { background: var(--morning);  border-color: var(--morning-border); color: var(--morning-text); }
-  .night    { background: var(--night);    border-color: var(--night-border);   color: var(--night-text); }
-  .custom   { background: var(--custom-bg); border-color: var(--custom-border); color: var(--custom-text); }
-  .dayoff   { background: var(--dayoff);   border-color: #222228;               color: var(--dayoff-text); }
+  .morning { background: var(--morning);  border-color: var(--morning-border); color: var(--morning-text); }
+  .night   { background: var(--night);    border-color: var(--night-border);   color: var(--night-text); }
+  .custom  { background: var(--custom-bg); border-color: var(--custom-border); color: var(--custom-text); }
+  .dayoff  { background: var(--dayoff);   border-color: #222228;               color: var(--dayoff-text); }
 
-  /* EDIT MODE */
-  body.edit-mode td.shift-cell .shift-badge {
-    cursor: pointer;
-  }
-
-  body.edit-mode td.shift-cell .shift-badge:hover {
-    transform: scale(1.06);
-    box-shadow: 0 0 0 2px var(--accent);
-  }
+  body.edit-mode td.shift-cell .shift-badge { cursor: pointer; }
+  body.edit-mode td.shift-cell .shift-badge:hover { transform: scale(1.06); box-shadow: 0 0 0 2px var(--accent); }
 
   tr.today { background: rgba(201, 168, 76, 0.06) !important; }
   tr.today td.date-cell .date-num { color: var(--accent); }
-  tr.today td.date-cell::before {
-    content: '▶';
-    font-size: 8px;
-    color: var(--accent);
-    margin-right: 4px;
-  }
+  tr.today td.date-cell::before { content: '▶'; font-size: 8px; color: var(--accent); margin-right: 4px; }
 
   /* MODAL */
   .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 100;
+    align-items: center; justify-content: center; padding: 20px;
   }
-
   .modal-overlay.open { display: flex; }
 
   .modal {
-    background: #1c1c22;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    width: 100%;
-    max-width: 320px;
+    background: #1c1c22; border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; width: 100%; max-width: 320px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6);
   }
+  .modal-title { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+  .modal-subtitle { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
 
-  .modal-title {
-    font-size: 11px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 4px;
-  }
-
-  .modal-subtitle {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: var(--text);
-  }
-
-  .shift-options {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
+  .shift-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 
   .shift-option {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all 0.15s;
-    background: var(--surface);
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    border-radius: 8px; border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.15s; background: var(--surface);
   }
-
   .shift-option:hover { border-color: var(--accent); }
   .shift-option.selected { border-color: var(--accent); background: rgba(201,168,76,0.08); }
+  .shift-option-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .shift-option-label { font-size: 13px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
 
-  .shift-option-dot {
-    width: 12px; height: 12px;
-    border-radius: 3px;
-    flex-shrink: 0;
-  }
-
-  .shift-option-label {
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* Custom time input */
-  .custom-time-section {
-    margin-bottom: 16px;
-  }
-
+  .custom-time-section { margin-bottom: 16px; }
   .custom-time-section label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 8px;
+    display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px;
   }
-
   .custom-time-section input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.15s;
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.15s;
   }
-
   .custom-time-section input:focus { border-color: var(--accent); }
   .custom-time-section input::placeholder { color: var(--muted); }
 
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-  }
-
+  .modal-actions { display: flex; gap: 8px; }
   .btn-cancel, .btn-save {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: all 0.15s;
+    flex: 1; padding: 10px; border-radius: 8px; font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s;
   }
-
-  .btn-cancel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-
+  .btn-cancel { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
   .btn-cancel:hover { color: var(--text); border-color: var(--text); }
-
-  .btn-save {
-    background: var(--accent);
-    color: #0d0d0f;
-  }
-
+  .btn-save { background: var(--accent); color: #0d0d0f; }
   .btn-save:hover { opacity: 0.9; }
 
   .footer {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 4px;
+    margin-top: 20px; display: flex; justify-content: space-between;
+    align-items: center; padding: 0 4px;
   }
-
-  .footer-note {
-    font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--muted);
-  }
-
-  .footer-brand {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
+  .footer-note { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+  .footer-brand { font-size: 12px; font-weight: 700; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -446,32 +246,26 @@
     </div>
     <div class="edit-bar">
       <span class="edit-status" id="editStatus">View mode</span>
-      <button class="btn-edit" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
+      <button class="btn" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
     </div>
   </div>
 </div>
+
+<div id="errorMsg"></div>
 
 <div class="table-wrap">
   <table id="roster">
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Alaa</th>
-        <th>Laila</th>
-        <th>Jons</th>
-        <th>Amany</th>
-        <th>Yasmine</th>
+        <th>Date</th><th>Alaa</th><th>Laila</th><th>Jons</th><th>Amany</th><th>Yasmine</th>
       </tr>
       <tr>
-        <th>—</th>
-        <th>Alaa</th>
-        <th>Laila</th>
-        <th>Jons</th>
-        <th>Amany</th>
-        <th>Yasmine</th>
+        <th>—</th><th>Alaa</th><th>Laila</th><th>Jons</th><th>Amany</th><th>Yasmine</th>
       </tr>
     </thead>
-    <tbody id="rosterBody"></tbody>
+    <tbody id="rosterBody">
+      <tr><td colspan="6" id="loadingMsg">Loading shifts...</td></tr>
+    </tbody>
   </table>
 </div>
 
@@ -483,9 +277,9 @@
 <!-- EDIT MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <div class="modal-title" id="modalTitle">Edit Shift</div>
+    <div class="modal-title">Edit Shift</div>
     <div class="modal-subtitle" id="modalSubtitle"></div>
-    <div class="shift-options" id="shiftOptions">
+    <div class="shift-options">
       <div class="shift-option" data-type="morning" onclick="selectOption(this)">
         <div class="shift-option-dot" style="background:#2d6a45"></div>
         <span class="shift-option-label">Morning</span>
@@ -507,9 +301,12 @@
       <label>Time (e.g. 11AM – 9PM)</label>
       <input type="text" id="customTimeInput" placeholder="e.g. 11AM – 9PM" />
     </div>
+    <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#f87171;margin-bottom:12px;display:none" id="editNote">
+      ⚠️ To save permanently, edit shifts.json on GitHub
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="saveShift()">Save</button>
+      <button class="btn-save" onclick="saveShift()">Apply</button>
     </div>
   </div>
 </div>
@@ -517,39 +314,8 @@
 <script>
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const STAFF = ['alaa','laila','jons','amany','yasmine'];
-  const STORAGE_KEY = 'sadafa_roster_june2026';
 
-  // Default shifts
-  function defaultShift(name, day) {
-    const d = day;
-    if (name === 'alaa')    return d <= 21 ? {type:'morning'} : {type:'night'};
-    if (name === 'laila')   return {type:'morning'};
-    if (name === 'jons')    return d <= 7 ? {type:'morning'} : d <= 14 ? {type:'night'} : {type:'morning'};
-    if (name === 'amany')   return {type:'custom', time:'11AM – 9PM'};
-    if (name === 'yasmine') return {type:'custom', time:'10AM – 8PM'};
-  }
-
-  // Load overrides from localStorage
-  let overrides = {};
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) overrides = JSON.parse(saved);
-  } catch(e) {}
-
-  function saveOverrides() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e) {}
-  }
-
-  function getShift(name, day) {
-    const key = `${name}_${day}`;
-    return overrides[key] || defaultShift(name, day);
-  }
-
-  function setShift(name, day, shift) {
-    const key = `${name}_${day}`;
-    overrides[key] = shift;
-    saveOverrides();
-  }
+  let shifts = {};
 
   function badgeHTML(shift) {
     const map = {
@@ -562,45 +328,66 @@
     return `<div class="shift-badge ${s.cls}"><span class="shift-type">${s.label}</span></div>`;
   }
 
-  // Build table
-  const tbody = document.getElementById('rosterBody');
-  const now = new Date();
-  const todayDay = (now.getFullYear() === 2026 && now.getMonth() === 5) ? now.getDate() : -1;
+  function buildTable() {
+    const tbody = document.getElementById('rosterBody');
+    tbody.innerHTML = '';
+    const now = new Date();
+    const todayDay = (now.getFullYear() === 2026 && now.getMonth() === 5) ? now.getDate() : -1;
 
-  for (let d = 1; d <= 30; d++) {
-    const date = new Date(2026, 5, d);
-    const dayName = DAYS[date.getDay()];
-    const isWeekend = date.getDay() === 5 || date.getDay() === 6;
-    const isToday = d === todayDay;
+    for (let d = 1; d <= 30; d++) {
+      const date = new Date(2026, 5, d);
+      const dayName = DAYS[date.getDay()];
+      const isWeekend = date.getDay() === 5 || date.getDay() === 6;
+      const isToday = d === todayDay;
 
-    const tr = document.createElement('tr');
-    tr.id = `row_${d}`;
-    if (isWeekend) tr.classList.add('weekend');
-    if (isToday)   tr.classList.add('today');
+      const tr = document.createElement('tr');
+      tr.id = `row_${d}`;
+      if (isWeekend) tr.classList.add('weekend');
+      if (isToday)   tr.classList.add('today');
 
-    let html = `<td class="date-cell">
-      <div class="date-num">${String(d).padStart(2,'0')}</div>
-      <div class="date-day">${dayName}</div>
-    </td>`;
+      let html = `<td class="date-cell">
+        <div class="date-num">${String(d).padStart(2,'0')}</div>
+        <div class="date-day">${dayName}</div>
+      </td>`;
 
-    for (const name of STAFF) {
-      const shift = getShift(name, d);
-      html += `<td class="shift-cell" id="cell_${name}_${d}" onclick="onCellClick('${name}', ${d})">${badgeHTML(shift)}</td>`;
+      for (const name of STAFF) {
+        const key = `${name}_${d}`;
+        const shift = shifts[key] || { type: 'dayoff' };
+        html += `<td class="shift-cell" id="cell_${key}" onclick="onCellClick('${name}',${d})">${badgeHTML(shift)}</td>`;
+      }
+
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
     }
-
-    tr.innerHTML = html;
-    tbody.appendChild(tr);
   }
 
-  // Refresh a single cell
+  // Fetch shifts.json from same folder
+  async function loadShifts() {
+    try {
+      const res = await fetch('shifts.json?t=' + Date.now());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      shifts = await res.json();
+      buildTable();
+    } catch(e) {
+      document.getElementById('loadingMsg') && (document.getElementById('loadingMsg').style.display = 'none');
+      const err = document.getElementById('errorMsg');
+      err.style.display = 'block';
+      err.textContent = '⚠️ Could not load shifts.json — make sure both files are in the same folder / GitHub repo.';
+      shifts = {};
+      buildTable();
+    }
+  }
+
+  loadShifts();
+
+  // Refresh a cell
   function refreshCell(name, day) {
     const cell = document.getElementById(`cell_${name}_${day}`);
-    if (cell) cell.innerHTML = badgeHTML(getShift(name, day));
+    if (cell) cell.innerHTML = badgeHTML(shifts[`${name}_${day}`] || {type:'dayoff'});
   }
 
   // Edit mode
   let editMode = false;
-
   function toggleEdit() {
     editMode = !editMode;
     document.body.classList.toggle('edit-mode', editMode);
@@ -610,35 +397,27 @@
     document.getElementById('editStatus').classList.toggle('active', editMode);
   }
 
-  // Modal state
-  let currentName = null;
-  let currentDay  = null;
-  let selectedType = null;
+  let currentName = null, currentDay = null, selectedType = null;
 
   function onCellClick(name, day) {
     if (!editMode) return;
-    currentName = name;
-    currentDay  = day;
+    currentName = name; currentDay = day;
 
-    const shift = getShift(name, day);
+    const shift = shifts[`${name}_${day}`] || {type:'morning'};
     const date = new Date(2026, 5, day);
-    const dayName = DAYS[date.getDay()];
     const nameLabel = name.charAt(0).toUpperCase() + name.slice(1);
+    document.getElementById('modalSubtitle').textContent =
+      `${nameLabel} · ${String(day).padStart(2,'0')} Jun (${DAYS[date.getDay()]})`;
 
-    document.getElementById('modalTitle').textContent = `Edit Shift`;
-    document.getElementById('modalSubtitle').textContent = `${nameLabel} · ${String(day).padStart(2,'0')} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][5]} (${dayName})`;
-
-    // Pre-select current
     selectedType = shift.type;
     document.querySelectorAll('.shift-option').forEach(el => {
       el.classList.toggle('selected', el.dataset.type === shift.type);
     });
 
-    // Show custom input if needed
-    const showCustom = shift.type === 'custom';
-    document.getElementById('customTimeSection').style.display = showCustom ? 'block' : 'none';
+    const isCustom = shift.type === 'custom';
+    document.getElementById('customTimeSection').style.display = isCustom ? 'block' : 'none';
     document.getElementById('customTimeInput').value = shift.time || '';
-
+    document.getElementById('editNote').style.display = 'block';
     document.getElementById('modalOverlay').classList.add('open');
   }
 
@@ -652,9 +431,7 @@
 
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('open');
-    currentName = null;
-    currentDay  = null;
-    selectedType = null;
+    currentName = null; currentDay = null; selectedType = null;
   }
 
   function saveShift() {
@@ -663,12 +440,11 @@
     if (selectedType === 'custom') {
       shift.time = document.getElementById('customTimeInput').value.trim() || 'Custom';
     }
-    setShift(currentName, currentDay, shift);
+    shifts[`${currentName}_${currentDay}`] = shift;
     refreshCell(currentName, currentDay);
     closeModal();
   }
 
-  // Close modal on overlay click
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
