@@ -61,8 +61,6 @@
   .header-left h1 { font-size: 38px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
   .header-left h1 span { color: var(--accent); }
 
-  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-
   .legend { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
 
   .legend-item {
@@ -71,30 +69,6 @@
   }
 
   .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
-
-  .edit-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-
-  .edit-status { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
-  .edit-status.active { color: var(--accent); }
-
-  .btn {
-    display: flex; align-items: center; gap: 6px;
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--text); font-family: 'Syne', sans-serif;
-    font-size: 12px; font-weight: 600; padding: 7px 14px;
-    border-radius: 8px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em;
-  }
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .btn.active { background: rgba(201,168,76,0.12); border-color: var(--accent); color: var(--accent); }
-
-  /* loading */
-  #loadingMsg {
-    text-align: center;
-    padding: 40px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
 
   #errorMsg {
     display: none;
@@ -152,75 +126,20 @@
     display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
     border-radius: 6px; padding: 5px 8px; min-width: 72px; min-height: 44px;
     border: 1px solid transparent; font-family: 'JetBrains Mono', monospace;
-    transition: transform 0.1s, box-shadow 0.1s;
   }
   .shift-badge .shift-type {
     font-size: 10px; font-weight: 500; letter-spacing: 0.08em;
     text-transform: uppercase; line-height: 1.2; text-align: center;
   }
 
-  .morning { background: var(--morning);  border-color: var(--morning-border); color: var(--morning-text); }
-  .night   { background: var(--night);    border-color: var(--night-border);   color: var(--night-text); }
-  .custom  { background: var(--custom-bg); border-color: var(--custom-border); color: var(--custom-text); }
-  .dayoff  { background: var(--dayoff);   border-color: #222228;               color: var(--dayoff-text); }
-
-  body.edit-mode td.shift-cell .shift-badge { cursor: pointer; }
-  body.edit-mode td.shift-cell .shift-badge:hover { transform: scale(1.06); box-shadow: 0 0 0 2px var(--accent); }
+  .morning { background: var(--morning);   border-color: var(--morning-border); color: var(--morning-text); }
+  .night   { background: var(--night);     border-color: var(--night-border);   color: var(--night-text); }
+  .custom  { background: var(--custom-bg); border-color: var(--custom-border);  color: var(--custom-text); }
+  .dayoff  { background: var(--dayoff);    border-color: #222228;               color: var(--dayoff-text); }
 
   tr.today { background: rgba(201, 168, 76, 0.06) !important; }
   tr.today td.date-cell .date-num { color: var(--accent); }
   tr.today td.date-cell::before { content: '▶'; font-size: 8px; color: var(--accent); margin-right: 4px; }
-
-  /* MODAL */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.75); z-index: 100;
-    align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: #1c1c22; border: 1px solid var(--border);
-    border-radius: 14px; padding: 24px; width: 100%; max-width: 320px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-  }
-  .modal-title { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
-  .modal-subtitle { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
-
-  .shift-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-
-  .shift-option {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-    border-radius: 8px; border: 1px solid var(--border); cursor: pointer;
-    transition: all 0.15s; background: var(--surface);
-  }
-  .shift-option:hover { border-color: var(--accent); }
-  .shift-option.selected { border-color: var(--accent); background: rgba(201,168,76,0.08); }
-  .shift-option-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-  .shift-option-label { font-size: 13px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
-
-  .custom-time-section { margin-bottom: 16px; }
-  .custom-time-section label {
-    display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px;
-  }
-  .custom-time-section input {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px; color: var(--text);
-    font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.15s;
-  }
-  .custom-time-section input:focus { border-color: var(--accent); }
-  .custom-time-section input::placeholder { color: var(--muted); }
-
-  .modal-actions { display: flex; gap: 8px; }
-  .btn-cancel, .btn-save {
-    flex: 1; padding: 10px; border-radius: 8px; font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s;
-  }
-  .btn-cancel { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
-  .btn-cancel:hover { color: var(--text); border-color: var(--text); }
-  .btn-save { background: var(--accent); color: #0d0d0f; }
-  .btn-save:hover { opacity: 0.9; }
 
   .footer {
     margin-top: 20px; display: flex; justify-content: space-between;
@@ -237,24 +156,18 @@
     <div class="month-label">Staff Roster</div>
     <h1>June <span>2026</span></h1>
   </div>
-  <div class="header-right">
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#2d6a45"></div> Morning</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div> Night</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#6a4f1a"></div> Custom time</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#222228"></div> Day Off</div>
-    </div>
-    <div class="edit-bar">
-      <span class="edit-status" id="editStatus">View mode</span>
-      <button class="btn" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
-    </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#2d6a45"></div> Morning</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div> Night</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6a4f1a"></div> Custom time</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#222228"></div> Day Off</div>
   </div>
 </div>
 
 <div id="errorMsg"></div>
 
 <div class="table-wrap">
-  <table id="roster">
+  <table>
     <thead>
       <tr>
         <th>Date</th><th>Alaa</th><th>Laila</th><th>Jons</th><th>Amany</th><th>Yasmine</th>
@@ -264,7 +177,7 @@
       </tr>
     </thead>
     <tbody id="rosterBody">
-      <tr><td colspan="6" id="loadingMsg">Loading shifts...</td></tr>
+      <tr><td colspan="6" style="text-align:center;padding:40px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#666672">Loading shifts...</td></tr>
     </tbody>
   </table>
 </div>
@@ -274,47 +187,9 @@
   <span class="footer-brand">Sadafa</span>
 </div>
 
-<!-- EDIT MODAL -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-title">Edit Shift</div>
-    <div class="modal-subtitle" id="modalSubtitle"></div>
-    <div class="shift-options">
-      <div class="shift-option" data-type="morning" onclick="selectOption(this)">
-        <div class="shift-option-dot" style="background:#2d6a45"></div>
-        <span class="shift-option-label">Morning</span>
-      </div>
-      <div class="shift-option" data-type="night" onclick="selectOption(this)">
-        <div class="shift-option-dot" style="background:#3a3a6a"></div>
-        <span class="shift-option-label">Night</span>
-      </div>
-      <div class="shift-option" data-type="custom" onclick="selectOption(this)">
-        <div class="shift-option-dot" style="background:#6a4f1a"></div>
-        <span class="shift-option-label">Custom time</span>
-      </div>
-      <div class="shift-option" data-type="dayoff" onclick="selectOption(this)">
-        <div class="shift-option-dot" style="background:#222228; border:1px solid #444"></div>
-        <span class="shift-option-label">Day Off</span>
-      </div>
-    </div>
-    <div class="custom-time-section" id="customTimeSection" style="display:none">
-      <label>Time (e.g. 11AM – 9PM)</label>
-      <input type="text" id="customTimeInput" placeholder="e.g. 11AM – 9PM" />
-    </div>
-    <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#f87171;margin-bottom:12px;display:none" id="editNote">
-      ⚠️ To save permanently, edit shifts.json on GitHub
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="saveShift()">Apply</button>
-    </div>
-  </div>
-</div>
-
 <script>
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const STAFF = ['alaa','laila','jons','amany','yasmine'];
-
   let shifts = {};
 
   function badgeHTML(shift) {
@@ -338,12 +213,10 @@
       const date = new Date(2026, 5, d);
       const dayName = DAYS[date.getDay()];
       const isWeekend = date.getDay() === 5 || date.getDay() === 6;
-      const isToday = d === todayDay;
 
       const tr = document.createElement('tr');
-      tr.id = `row_${d}`;
       if (isWeekend) tr.classList.add('weekend');
-      if (isToday)   tr.classList.add('today');
+      if (d === todayDay) tr.classList.add('today');
 
       let html = `<td class="date-cell">
         <div class="date-num">${String(d).padStart(2,'0')}</div>
@@ -351,9 +224,8 @@
       </td>`;
 
       for (const name of STAFF) {
-        const key = `${name}_${d}`;
-        const shift = shifts[key] || { type: 'dayoff' };
-        html += `<td class="shift-cell" id="cell_${key}" onclick="onCellClick('${name}',${d})">${badgeHTML(shift)}</td>`;
+        const shift = shifts[`${name}_${d}`] || { type:'dayoff' };
+        html += `<td class="shift-cell">${badgeHTML(shift)}</td>`;
       }
 
       tr.innerHTML = html;
@@ -361,7 +233,6 @@
     }
   }
 
-  // Fetch shifts.json from same folder
   async function loadShifts() {
     try {
       const res = await fetch('shifts.json?t=' + Date.now());
@@ -369,85 +240,14 @@
       shifts = await res.json();
       buildTable();
     } catch(e) {
-      document.getElementById('loadingMsg') && (document.getElementById('loadingMsg').style.display = 'none');
       const err = document.getElementById('errorMsg');
       err.style.display = 'block';
-      err.textContent = '⚠️ Could not load shifts.json — make sure both files are in the same folder / GitHub repo.';
-      shifts = {};
+      err.textContent = '⚠️ Could not load shifts.json — make sure both files are in the same GitHub repo folder.';
       buildTable();
     }
   }
 
   loadShifts();
-
-  // Refresh a cell
-  function refreshCell(name, day) {
-    const cell = document.getElementById(`cell_${name}_${day}`);
-    if (cell) cell.innerHTML = badgeHTML(shifts[`${name}_${day}`] || {type:'dayoff'});
-  }
-
-  // Edit mode
-  let editMode = false;
-  function toggleEdit() {
-    editMode = !editMode;
-    document.body.classList.toggle('edit-mode', editMode);
-    document.getElementById('editBtn').classList.toggle('active', editMode);
-    document.getElementById('editBtn').textContent = editMode ? '🔒 Lock' : '✏️ Edit';
-    document.getElementById('editStatus').textContent = editMode ? 'Edit mode — tap any shift' : 'View mode';
-    document.getElementById('editStatus').classList.toggle('active', editMode);
-  }
-
-  let currentName = null, currentDay = null, selectedType = null;
-
-  function onCellClick(name, day) {
-    if (!editMode) return;
-    currentName = name; currentDay = day;
-
-    const shift = shifts[`${name}_${day}`] || {type:'morning'};
-    const date = new Date(2026, 5, day);
-    const nameLabel = name.charAt(0).toUpperCase() + name.slice(1);
-    document.getElementById('modalSubtitle').textContent =
-      `${nameLabel} · ${String(day).padStart(2,'0')} Jun (${DAYS[date.getDay()]})`;
-
-    selectedType = shift.type;
-    document.querySelectorAll('.shift-option').forEach(el => {
-      el.classList.toggle('selected', el.dataset.type === shift.type);
-    });
-
-    const isCustom = shift.type === 'custom';
-    document.getElementById('customTimeSection').style.display = isCustom ? 'block' : 'none';
-    document.getElementById('customTimeInput').value = shift.time || '';
-    document.getElementById('editNote').style.display = 'block';
-    document.getElementById('modalOverlay').classList.add('open');
-  }
-
-  function selectOption(el) {
-    document.querySelectorAll('.shift-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedType = el.dataset.type;
-    document.getElementById('customTimeSection').style.display = selectedType === 'custom' ? 'block' : 'none';
-    if (selectedType === 'custom') document.getElementById('customTimeInput').focus();
-  }
-
-  function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('open');
-    currentName = null; currentDay = null; selectedType = null;
-  }
-
-  function saveShift() {
-    if (!currentName || !currentDay || !selectedType) return;
-    const shift = { type: selectedType };
-    if (selectedType === 'custom') {
-      shift.time = document.getElementById('customTimeInput').value.trim() || 'Custom';
-    }
-    shifts[`${currentName}_${currentDay}`] = shift;
-    refreshCell(currentName, currentDay);
-    closeModal();
-  }
-
-  document.getElementById('modalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeModal();
-  });
 </script>
 </body>
 </html>
