@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Roster – June 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --border: #2a2a30;
+    --morning: #1a3a2a;
+    --morning-text: #4ade80;
+    --morning-border: #2d6a45;
+    --night: #1a1a3a;
+    --night-text: #818cf8;
+    --night-border: #3a3a6a;
+    --custom-am: #2a1f0a;
+    --custom-am-text: #fbbf24;
+    --custom-am-border: #6a4f1a;
+    --custom-yas: #1a2a3a;
+    --custom-yas-text: #38bdf8;
+    --custom-yas-border: #1e5a7a;
+    --dayoff: #1a1a1c;
+    --dayoff-text: #555560;
+    --weekend: #111114;
+    --accent: #c9a84c;
+    --text: #e8e8f0;
+    --muted: #666672;
+    --header-bg: #1c1c22;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left .month-label {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .header-left h1 {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .header-left h1 span {
+    color: var(--accent);
+  }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  /* TABLE WRAPPER */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 760px;
+  }
+
+  /* COLUMN HEADERS */
+  thead tr:first-child th {
+    background: var(--header-bg);
+    padding: 14px 0 12px;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+
+  thead tr:first-child th:first-child {
+    text-align: left;
+    padding-left: 16px;
+    width: 90px;
+  }
+
+  /* NAME ROW */
+  thead tr:nth-child(2) th {
+    background: var(--surface);
+    padding: 10px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    border-bottom: 2px solid var(--accent);
+    text-align: center;
+  }
+
+  thead tr:nth-child(2) th:first-child {
+    text-align: left;
+    padding-left: 16px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* BODY ROWS */
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover {
+    background: rgba(255,255,255,0.02);
+  }
+
+  tbody tr.weekend {
+    background: var(--weekend);
+  }
+
+  tbody tr.weekend:hover {
+    background: rgba(255,255,255,0.015);
+  }
+
+  /* DATE CELL */
+  td.date-cell {
+    padding: 6px 8px 6px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .date-num {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .date-day {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .weekend .date-num { color: var(--muted); }
+  .weekend .date-day { color: #444450; }
+
+  /* SHIFT CELLS */
+  td.shift-cell {
+    padding: 5px 4px;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .shift-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    padding: 5px 8px;
+    min-width: 72px;
+    min-height: 44px;
+    border: 1px solid transparent;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .shift-badge .shift-type {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .shift-badge .shift-time {
+    font-size: 9px;
+    margin-top: 3px;
+    opacity: 0.7;
+    line-height: 1;
+  }
+
+  /* Variants */
+  .morning {
+    background: var(--morning);
+    border-color: var(--morning-border);
+    color: var(--morning-text);
+  }
+
+  .night {
+    background: var(--night);
+    border-color: var(--night-border);
+    color: var(--night-text);
+  }
+
+  .amany-shift {
+    background: var(--custom-am);
+    border-color: var(--custom-am-border);
+    color: var(--custom-am-text);
+  }
+
+  .yasmine-shift {
+    background: var(--custom-yas);
+    border-color: var(--custom-yas-border);
+    color: var(--custom-yas-text);
+  }
+
+  .dayoff {
+    background: var(--dayoff);
+    border-color: #222228;
+    color: var(--dayoff-text);
+  }
+
+  /* TODAY highlight */
+  tr.today {
+    background: rgba(201, 168, 76, 0.06) !important;
+  }
+  tr.today td.date-cell .date-num {
+    color: var(--accent);
+  }
+  tr.today td.date-cell::before {
+    content: '▶';
+    font-size: 8px;
+    color: var(--accent);
+    margin-right: 4px;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+  }
+
+  .footer-note {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+
+  .footer-brand {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; color: black; padding: 10px; }
+    .header { border-color: #ccc; }
+    .table-wrap { border-color: #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="month-label">Staff Roster</div>
+    <h1>June <span>2026</span></h1>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#2d6a45"></div> Morning</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div> Night</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6a4f1a"></div> Amany 11AM–9PM</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1e5a7a"></div> Yasmine 10AM–8PM</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#222228"></div> Day Off</div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="roster">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Alaa</th>
+        <th>Laila</th>
+        <th>Jons</th>
+        <th>Amany</th>
+        <th>Yasmine</th>
+      </tr>
+      <tr>
+        <th>—</th>
+        <th>Alaa</th>
+        <th>Laila</th>
+        <th>Jons</th>
+        <th>Amany</th>
+        <th>Yasmine</th>
+      </tr>
+    </thead>
+    <tbody id="rosterBody"></tbody>
+  </table>
+</div>
+
+<div class="footer">
+  <span class="footer-note">Generated Jun 7, 2026 · June roster v1</span>
+  <span class="footer-brand">Sadafa</span>
+</div>
+
+<script>
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Shift badge HTML builders
+  function badge(cls, label) {
+    return `<div class="shift-badge ${cls}">
+      <span class="shift-type">${label}</span>
+    </div>`;
+  }
+  // alias used by Amany/Yasmine with time shown as the label itself
+
+  const MORNING = badge('morning', 'Morning');
+  const NIGHT   = badge('night', 'Night');
+  const AMANY   = badge('amany-shift', '11AM – 9PM');
+  const YASMINE = badge('yasmine-shift', '10AM – 8PM');
+  const DAYOFF  = badge('dayoff', 'Day Off');
+
+  function getShifts(date) {
+    const d = date.getDate(); // 1–30
+    const day = date.getDay(); // 0=Sun
+    const isWeekend = (day === 5 || day === 6); // Fri/Sat as weekend
+
+    // Alaa: weeks 1–3 (June 1–21) morning, week 4 (June 22–30) night
+    const alaa = d <= 21 ? MORNING : NIGHT;
+
+    // Laila: morning all month
+    const laila = MORNING;
+
+    // Jons: June 7 is today (Sunday). Tomorrow = June 8.
+    // June 8–14: night, June 15–30: morning
+    // June 1–7: morning (before "starting from tomorrow")
+    let jons;
+    if (d <= 7) {
+      jons = MORNING;
+    } else if (d <= 14) {
+      jons = NIGHT;
+    } else {
+      jons = MORNING;
+    }
+
+    // Amany: 11AM–9PM all month
+    const amany = AMANY;
+
+    // Yasmine: 10AM–8PM all month
+    const yasmine = YASMINE;
+
+    return { alaa, laila, jons, amany, yasmine, isWeekend };
+  }
+
+  const tbody = document.getElementById('rosterBody');
+  const now = new Date();
+  const todayDay = (now.getFullYear() === 2026 && now.getMonth() === 5) ? now.getDate() : -1;
+
+  for (let d = 1; d <= 30; d++) {
+    const date = new Date(2026, 5, d);
+    const dayName = DAYS[date.getDay()];
+    const isWeekend = date.getDay() === 5 || date.getDay() === 6;
+    const isToday = d === todayDay;
+
+    const { alaa, laila, jons, amany, yasmine } = getShifts(date);
+
+    const tr = document.createElement('tr');
+    if (isWeekend) tr.classList.add('weekend');
+    if (isToday) tr.classList.add('today');
+
+    tr.innerHTML = `
+      <td class="date-cell">
+        <div class="date-num">${String(d).padStart(2,'0')}</div>
+        <div class="date-day">${dayName}</div>
+      </td>
+      <td class="shift-cell">${alaa}</td>
+      <td class="shift-cell">${laila}</td>
+      <td class="shift-cell">${jons}</td>
+      <td class="shift-cell">${amany}</td>
+      <td class="shift-cell">${yasmine}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+</script>
+</body>
+</html>
