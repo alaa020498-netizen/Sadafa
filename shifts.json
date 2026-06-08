@@ -138,19 +138,19 @@
   "yasmine_13": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_14": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_15": {"type":"custom","time":"10AM – 8PM"},
-  "yasmine_16": {"type":"custom","time":"10AM – 8PM"},
+  "yasmine_16": {"type":"dayoff"},
   "yasmine_17": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_18": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_19": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_20": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_21": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_22": {"type":"custom","time":"10AM – 8PM"},
-  "yasmine_23": {"type":"custom","time":"10AM – 8PM"},
+  "yasmine_23": {"type":"dayoff"},
   "yasmine_24": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_25": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_26": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_27": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_28": {"type":"custom","time":"10AM – 8PM"},
   "yasmine_29": {"type":"custom","time":"10AM – 8PM"},
-  "yasmine_30": {"type":"custom","time":"10AM – 8PM"}
+  "yasmine_30": {"type":"dayoff"}
 }
