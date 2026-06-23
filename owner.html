@@ -300,18 +300,28 @@ async function render() {
     return d.getMonth()===currentMonth && d.getFullYear()===currentYear;
   }).sort((a,b) => a.ci.localeCompare(b.ci));
 
-  // Availability windows
+  // Availability windows — scoped to the selected month
+  const monthStartStr = fmt(new Date(currentYear, currentMonth, 1));
+  const monthEndStr   = fmt(new Date(currentYear, currentMonth+1, 0));
   const windows = [];
   let ws = todayStr;
-  futureRows.forEach(b => {
-    if(b.ci > ws) {
-      const n = Math.round((new Date(b.ci+"T00:00:00")-new Date(ws+"T00:00:00"))/86400000);
-      if(n > 0) windows.push({from:ws, to:b.ci, nights:n});
+  for (const b of futureRows) {
+    if (b.ci > monthEndStr) break;
+    if (b.ci > ws) {
+      const winStart = ws < monthStartStr ? monthStartStr : ws;
+      if (b.ci > winStart) {
+        const n = Math.round((new Date(b.ci+"T00:00:00")-new Date(winStart+"T00:00:00"))/86400000);
+        if (n > 0) windows.push({from:winStart, to:b.ci, nights:n});
+      }
     }
-    if(b.co && b.co > ws) ws = b.co;
-    else if(b.ci > ws) ws = b.ci;
-  });
-  windows.push({from:ws, to:null, nights:null});
+    if (b.co && b.co > ws) ws = b.co;
+    else if (b.ci > ws) ws = b.ci;
+  }
+  const trailStart = ws < monthStartStr ? monthStartStr : ws;
+  if (trailStart < monthEndStr) {
+    const n = Math.round((new Date(monthEndStr+"T00:00:00")-new Date(trailStart+"T00:00:00"))/86400000);
+    if (n > 0) windows.push({from:trailStart, to:monthEndStr, nights:n});
+  }
 
   // ── Build HTML ──
   let h = `
