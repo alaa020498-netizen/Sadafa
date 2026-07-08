@@ -162,6 +162,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Add
     </button>
+    <button class="nav-tab" onclick="show('avail')" id="tab-avail">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Avail
+    </button>
     <button class="nav-tab" onclick="show('sched')" id="tab-sched">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       Tomorrow
@@ -247,6 +251,28 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
     </div>
   </div>
   <button class="btn-main" id="btn-save" onclick="saveRes()">Save Reservation →</button>
+</div>
+
+<!-- AVAILABILITY SCREEN -->
+<div class="screen" id="screen-avail">
+  <p class="page-title">Check Availability</p>
+  <p class="page-sub">Pick dates → see which units are free</p>
+  <div class="date-row">
+    <div class="form-group">
+      <label class="form-label">Check-in</label>
+      <input class="form-input" type="date" id="av-ci" oninput="avNights()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Check-out</label>
+      <input class="form-input" type="date" id="av-co" oninput="avNights()">
+    </div>
+  </div>
+  <div class="nights-pill off" id="av-pill">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <span id="av-nights-txt"></span>
+  </div>
+  <button class="btn-main" id="btn-avail" onclick="searchAvail()">Find Available Units →</button>
+  <div id="avail-body" style="margin-top:20px"></div>
 </div>
 
 <!-- SCHEDULE SCREEN -->
@@ -529,6 +555,7 @@ function show(name) {
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-" + name).classList.add("active");
   document.getElementById("tab-" + name).classList.add("active");
+  if (name === "avail")  initAvail();
   if (name === "sched")  loadSched();
   if (name === "manage") show_manage();
   if (name === "brief")  loadBrief();
@@ -716,6 +743,105 @@ async function saveRes() {
     toast("Network error","err");
   }
   btn.disabled = false; btn.textContent = "Save Reservation →";
+}
+
+// ── AVAILABILITY TAB ──────────────────────────────────────────
+function avNights(){
+  const ci=document.getElementById("av-ci").value, co=document.getElementById("av-co").value;
+  const pill=document.getElementById("av-pill");
+  if(ci&&co){
+    const n=nts(ci,co);
+    if(n>0){ document.getElementById("av-nights-txt").textContent=n+(n===1?" night":" nights"); pill.classList.remove("off"); return; }
+  }
+  pill.classList.add("off");
+}
+
+function initAvail(){
+  if(!document.getElementById("av-ci").value){
+    const t=new Date(), tm=new Date(t); tm.setDate(t.getDate()+1);
+    document.getElementById("av-ci").value=fmt(t);
+    document.getElementById("av-co").value=fmt(tm);
+    avNights();
+  }
+}
+
+async function searchAvail(){
+  const ci=document.getElementById("av-ci").value, co=document.getElementById("av-co").value;
+  if(!ci||!co){ toast("Fill in both dates","err"); return; }
+  if(new Date(co)<=new Date(ci)){ toast("Check-out must be after check-in","err"); return; }
+  const btn=document.getElementById("btn-avail");
+  btn.disabled=true; btn.textContent="Searching…";
+  document.getElementById("avail-body").innerHTML='<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Checking all units…</p>';
+
+  // Collect every booking that could overlap the range, across ALL month DBs
+  const bookings={}; // unit -> [{ci,co,guest}]
+  await Promise.all(Object.values(MONTH_DBS).map(async dbId=>{
+    let cursor=null;
+    try{
+      do{
+        const body={page_size:100, filter:{property:"Check-in Date",date:{before:co}}};
+        if(cursor) body.start_cursor=cursor;
+        const data=await notionQuery(dbId,body);
+        (data.results||[]).forEach(p=>{
+          const pr=p.properties||{};
+          const u=pr["Listing Name"]?.select?.name;
+          const bci=pr["Check-in Date"]?.date?.start;
+          const bco=pr["Check-out Date"]?.date?.start||bci;
+          if(u&&bci&&bco>ci){
+            if(!bookings[u]) bookings[u]=[];
+            bookings[u].push({ci:bci,co:bco,guest:pr["Guest Name"]?.rich_text?.[0]?.plain_text||"—"});
+          }
+        });
+        cursor=data.has_more?data.next_cursor:null;
+      }while(cursor);
+    }catch(e){}
+  }));
+
+  const units=await fetchUnits();
+  const avail=[], busy=[];
+  units.forEach(u=>{
+    // overlap if booking.ci < requested co AND booking.co > requested ci
+    const conflict=(bookings[u]||[]).find(b=> b.ci<co && b.co>ci );
+    conflict ? busy.push({unit:u,b:conflict}) : avail.push(u);
+  });
+
+  const n=nts(ci,co);
+  let h=`<div class="sec-label"><div class="sdot" style="background:var(--success)"></div><span style="color:var(--success)">Available ${fmtD(ci)} → ${fmtD(co)} (${n}n)</span><span class="cnt-badge">${avail.length}</span></div>`;
+  if(!avail.length) h+='<div class="empty-state"><span class="empty-icon">😔</span>No units free for these dates</div>';
+  else avail.forEach(u=>{
+    h+=`<div class="res-card" style="border-left:3px solid var(--success);cursor:pointer" onclick="bookFromAvail('${u.replace(/'/g,"\\'")}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div>
+          <div class="card-unit">${u}</div>
+          <div class="card-guest" style="color:var(--success)">Free for the full stay</div>
+        </div>
+        <div style="flex-shrink:0;font-size:11px;color:var(--accent);font-weight:600">Book →</div>
+      </div>
+    </div>`;
+  });
+
+  h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot" style="background:var(--danger)"></div><span style="color:var(--danger)">Not Available</span><span class="cnt-badge">${busy.length}</span></div>`;
+  if(!busy.length) h+='<div class="empty-state"><span class="empty-icon">🎉</span>All units are free</div>';
+  else busy.forEach(x=>{
+    h+=`<div class="res-card" style="border-left:3px solid var(--danger)"><div class="card-unit">${x.unit}</div><div class="card-meta">Conflict: ${fmtD(x.b.ci)} → ${fmtD(x.b.co)} · ${x.b.guest}</div></div>`;
+  });
+
+  document.getElementById("avail-body").innerHTML=h;
+  btn.disabled=false; btn.textContent="Find Available Units →";
+}
+
+function bookFromAvail(unit){
+  const ci=document.getElementById("av-ci").value;
+  const co=document.getElementById("av-co").value;
+  document.getElementById("f-ci").value=ci;
+  document.getElementById("f-co").value=co;
+  nightsCalc();
+  show('add');
+  fetchUnits().then(units=>{
+    populateUnits(units);
+    ddSelect("f-unit", unit);
+    toast("✓ "+unit+" · "+fmtD(ci)+" → "+fmtD(co),"ok");
+  });
 }
 
 async function loadSched() {
