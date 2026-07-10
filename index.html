@@ -148,6 +148,37 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
 .unit-res-price.usd{color:#4a9fd4}
 .unit-res-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
 .src-pip{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── LEADERBOARD ── */
+.rank-sort-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.rank-hero-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.rank-hero{border-radius:13px;padding:14px;position:relative;overflow:hidden}
+.rank-hero.best{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.28)}
+.rank-hero.worst{background:rgba(224,92,92,.06);border:1px solid rgba(224,92,92,.22)}
+.rank-hero-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.rank-hero.best .rank-hero-lbl{color:var(--accent)}
+.rank-hero.worst .rank-hero-lbl{color:var(--danger)}
+.rank-hero-unit{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rank-hero-val{font-size:12px;font-weight:600}
+.rank-hero.best .rank-hero-val{color:var(--accent2)}
+.rank-hero.worst .rank-hero-val{color:var(--danger)}
+.rank-hero-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.rank-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.rank-card.zero{opacity:.55}
+.rank-num{flex-shrink:0;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.rank-num.r1{background:rgba(201,168,76,.18);border-color:rgba(201,168,76,.4);color:var(--accent2)}
+.rank-num.r2{background:rgba(190,190,200,.12);border-color:rgba(190,190,200,.3);color:#c8c8d0}
+.rank-num.r3{background:rgba(205,127,80,.12);border-color:rgba(205,127,80,.3);color:#cd8a5c}
+.rank-num.rlast{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.3);color:var(--danger)}
+.rank-info{flex:1;min-width:0}
+.rank-unit{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.rank-meta{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rank-bar-wrap{height:4px;background:var(--surface2);border-radius:4px;margin-top:7px;overflow:hidden}
+.rank-bar{height:100%;border-radius:4px;background:var(--accent);transition:width .4s ease}
+.rank-bar.low{background:var(--danger)}
+.rank-vals{flex-shrink:0;text-align:right}
+.rank-total{font-size:13px;font-weight:700;color:var(--accent2)}
+.rank-nights{font-size:10px;color:var(--muted);margin-top:2px}
 </style>
 </head>
 <body>
@@ -185,6 +216,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
     <button class="nav-tab" onclick="show('unit')" id="tab-unit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Unit
+    </button>
+    <button class="nav-tab" onclick="show('rank')" id="tab-rank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a1 1 0 0 1 1 1c0 2.5-2 4-4 4"/><path d="M7 5H4a1 1 0 0 0-1 1c0 2.5 2 4 4 4"/></svg>
+      Rank
     </button>
     <button class="nav-tab" onclick="show('owners')" id="tab-owners">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -459,6 +494,27 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
   <div id="ud-body"></div>
 </div>
 
+<!-- LEADERBOARD SCREEN -->
+<div class="screen" id="screen-rank">
+  <p class="page-title">Unit Leaderboard</p>
+  <p class="page-sub">Best & worst performers by revenue and occupancy</p>
+  <div class="form-group">
+    <label class="form-label">Period</label>
+    <select class="form-input" id="rank-month" onchange="renderRank()">
+      <option value="">All Months</option>
+    </select>
+  </div>
+  <div class="rank-sort-row">
+    <button class="pick-btn on" id="rank-sort-rev" onclick="setRankSort('rev')">💰 By Revenue</button>
+    <button class="pick-btn" id="rank-sort-occ" onclick="setRankSort('occ')">🌙 By Occupancy</button>
+  </div>
+  <button class="refresh-btn" onclick="loadRank(true)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Refresh
+  </button>
+  <div id="rank-body"><div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p></div>
+</div>
+
 <!-- OWNER LINKS SCREEN -->
 <div class="screen" id="screen-owners">
   <p class="page-title">Owner Links</p>
@@ -561,6 +617,7 @@ function show(name) {
   if (name === "brief")  loadBrief();
   if (name === "hist")   loadHist();
   if (name === "unit")   initUnitDash();
+  if (name === "rank")   loadRank();
   if (name === "owners") loadOwnerLinks();
 }
 
@@ -842,6 +899,159 @@ function bookFromAvail(unit){
     ddSelect("f-unit", unit);
     toast("✓ "+unit+" · "+fmtD(ci)+" → "+fmtD(co),"ok");
   });
+}
+
+// ── LEADERBOARD TAB ───────────────────────────────────────────
+const USD_TO_EGP = 55; // conversion rate for combined ranking
+let rankData = null;
+let rankSort = "rev"; // 'rev' or 'occ'
+
+function setRankSort(s){
+  rankSort = s;
+  document.getElementById("rank-sort-rev").classList.toggle("on", s==="rev");
+  document.getElementById("rank-sort-occ").classList.toggle("on", s==="occ");
+  renderRank();
+}
+
+async function loadRank(force){
+  const msel = document.getElementById("rank-month");
+  if (msel.options.length <= 1) {
+    Object.keys(MONTH_DBS).forEach(m => {
+      const o = document.createElement("option");
+      o.value = o.textContent = m;
+      msel.appendChild(o);
+    });
+  }
+  if (rankData && !force) { renderRank(); return; }
+  document.getElementById("rank-body").innerHTML =
+    '<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Crunching all reservations…</p>';
+  const rows = [];
+  await Promise.all(Object.keys(MONTH_DBS).map(async month => {
+    try {
+      let cursor = null;
+      do {
+        const body = { page_size: 100 };
+        if (cursor) body.start_cursor = cursor;
+        const data = await notionQuery(MONTH_DBS[month], body);
+        (data.results || []).forEach(p => {
+          const pr = p.properties || {};
+          const unit = pr["Listing Name"]?.select?.name;
+          const ci = pr["Check-in Date"]?.date?.start;
+          if (!unit || !ci) return;
+          rows.push({
+            month, unit: unit.trim(), ci,
+            co: pr["Check-out Date"]?.date?.start || "",
+            price: pr["Total Price"]?.number || 0,
+            cur: pr["Currency"]?.select?.name || "EGP",
+          });
+        });
+        cursor = data.has_more ? data.next_cursor : null;
+      } while (cursor);
+    } catch(e) {}
+  }));
+  rankData = rows;
+  // make sure the full unit list is loaded so zero-booking units also appear
+  try { await fetchUnits(); } catch(e) {}
+  renderRank();
+}
+
+function renderRank(){
+  if (!rankData) return;
+  const month = document.getElementById("rank-month").value;
+  let rows = rankData;
+  if (month) rows = rows.filter(r => r.month === month);
+
+  // aggregate per unit
+  const agg = {};
+  rows.forEach(r => {
+    if (!agg[r.unit]) agg[r.unit] = { unit: r.unit, egp: 0, usd: 0, nights: 0, bookings: 0 };
+    const a = agg[r.unit];
+    a.bookings++;
+    a.nights += nts(r.ci, r.co);
+    if (r.cur === "USD") a.usd += r.price; else a.egp += r.price;
+  });
+  // include zero-booking units from the master unit list
+  (unitsCache || []).forEach(u => {
+    if (!agg[u]) agg[u] = { unit: u, egp: 0, usd: 0, nights: 0, bookings: 0 };
+  });
+
+  let list = Object.values(agg);
+  if (!list.length) {
+    document.getElementById("rank-body").innerHTML =
+      '<div class="empty-state"><span class="empty-icon">📭</span>No data found</div>';
+    return;
+  }
+  list.forEach(a => a.total = a.egp + a.usd * USD_TO_EGP);
+  list.sort((a, b) => rankSort === "rev" ? b.total - a.total : (b.nights - a.nights) || (b.total - a.total));
+
+  // occupancy % only makes sense for a single month
+  let occDays = null;
+  if (month) {
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const mi = monthNames.indexOf(month);
+    if (mi >= 0) occDays = new Date(2026, mi + 1, 0).getDate();
+  }
+
+  const withData = list.filter(a => a.bookings > 0);
+  const best  = withData[0] || list[0];
+  const worst = withData.length ? withData[withData.length - 1] : list[list.length - 1];
+  const zeroCount = list.length - withData.length;
+  const maxVal = Math.max(...list.map(a => rankSort === "rev" ? a.total : a.nights), 1);
+
+  const fmtRev = a => {
+    const parts = [];
+    if (a.egp > 0) parts.push("EGP " + a.egp.toLocaleString());
+    if (a.usd > 0) parts.push("$" + a.usd.toLocaleString());
+    return parts.length ? parts.join(" + ") : "—";
+  };
+  const occStr = a => occDays
+    ? Math.min(100, Math.round(a.nights / occDays * 100)) + "% · " + a.nights + "n"
+    : a.nights + " night" + (a.nights !== 1 ? "s" : "");
+
+  let h = `<div class="rank-hero-row">
+    <div class="rank-hero best">
+      <div class="rank-hero-lbl">🏆 ${rankSort === "rev" ? "Top Earner" : "Most Occupied"}</div>
+      <div class="rank-hero-unit">${best.unit}</div>
+      <div class="rank-hero-val">${rankSort === "rev" ? fmtRev(best) : occStr(best)}</div>
+      <div class="rank-hero-sub">${rankSort === "rev" ? occStr(best) : fmtRev(best)} · ${best.bookings} booking${best.bookings !== 1 ? "s" : ""}</div>
+    </div>
+    <div class="rank-hero worst">
+      <div class="rank-hero-lbl">⚠️ ${rankSort === "rev" ? "Lowest Earner" : "Least Occupied"}</div>
+      <div class="rank-hero-unit">${worst.unit}</div>
+      <div class="rank-hero-val">${rankSort === "rev" ? fmtRev(worst) : occStr(worst)}</div>
+      <div class="rank-hero-sub">${rankSort === "rev" ? occStr(worst) : fmtRev(worst)} · ${worst.bookings} booking${worst.bookings !== 1 ? "s" : ""}</div>
+    </div>
+  </div>`;
+
+  if (zeroCount > 0) {
+    h += `<div class="warn-box">⚠ ${zeroCount} unit${zeroCount !== 1 ? "s have" : " has"} zero bookings ${month ? "in " + month : "recorded"} — shown at the bottom of the list.</div>`;
+  }
+
+  h += `<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">${month || "All Months"} · ${list.length} units · sorted by ${rankSort === "rev" ? "revenue" : "occupancy"}</div>`;
+
+  const lastRankedIdx = withData.length - 1;
+  list.forEach((a, i) => {
+    const val = rankSort === "rev" ? a.total : a.nights;
+    const pct = Math.max(2, Math.round(val / maxVal * 100));
+    const isZero = a.bookings === 0;
+    const isLast = !isZero && i === lastRankedIdx && withData.length > 3;
+    const numCls = isZero ? "" : i === 0 ? " r1" : i === 1 ? " r2" : i === 2 ? " r3" : isLast ? " rlast" : "";
+    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+    h += `<div class="rank-card${isZero ? " zero" : ""}">
+      <div class="rank-num${numCls}">${isZero ? "—" : medal}</div>
+      <div class="rank-info">
+        <div class="rank-unit">${a.unit}</div>
+        <div class="rank-meta"><span>${occStr(a)}</span><span>·</span><span>${a.bookings} booking${a.bookings !== 1 ? "s" : ""}</span></div>
+        <div class="rank-bar-wrap"><div class="rank-bar${isLast || isZero ? " low" : ""}" style="width:${isZero ? 0 : pct}%"></div></div>
+      </div>
+      <div class="rank-vals">
+        <div class="rank-total">${a.total > 0 ? "EGP " + Math.round(a.total).toLocaleString() : "—"}</div>
+        <div class="rank-nights">${a.usd > 0 ? "incl. $" + a.usd.toLocaleString() : "&nbsp;"}</div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById("rank-body").innerHTML = h;
 }
 
 async function loadSched() {
