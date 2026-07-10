@@ -949,7 +949,14 @@ async function loadRank(force){
       } while (cursor);
     } catch(e) {}
   }));
-  rankData = rows;
+  // dedupe: same unit + same check-in appearing in more than one month DB counts once
+  const seenKeys = new Set();
+  rankData = rows.filter(r => {
+    const k = r.unit + "|" + r.ci;
+    if (seenKeys.has(k)) return false;
+    seenKeys.add(k);
+    return true;
+  });
   // make sure the full unit list is loaded so zero-booking units also appear
   try { await fetchUnits(); } catch(e) {}
   renderRank();
@@ -959,7 +966,8 @@ function renderRank(){
   if (!rankData) return;
   const month = document.getElementById("rank-month").value;
   let rows = rankData;
-  if (month) rows = rows.filter(r => r.month === month);
+  // filter by the ACTUAL check-in month, not which DB the row was saved in
+  if (month) rows = rows.filter(r => new Date(r.ci + "T00:00:00").toLocaleString("en-US", { month: "long" }) === month);
 
   // aggregate per unit
   const agg = {};
@@ -1045,8 +1053,8 @@ function renderRank(){
         <div class="rank-bar-wrap"><div class="rank-bar${isLast || isZero ? " low" : ""}" style="width:${isZero ? 0 : pct}%"></div></div>
       </div>
       <div class="rank-vals">
-        <div class="rank-total">${a.total > 0 ? "EGP " + Math.round(a.total).toLocaleString() : "—"}</div>
-        <div class="rank-nights">${a.usd > 0 ? "incl. $" + a.usd.toLocaleString() : "&nbsp;"}</div>
+        <div class="rank-total">${a.egp > 0 ? "EGP " + a.egp.toLocaleString() : (a.usd > 0 ? "&nbsp;" : "—")}</div>
+        <div class="rank-nights" style="${a.usd > 0 ? "color:#4a9fd4;font-weight:700;font-size:12px" : ""}">${a.usd > 0 ? "$" + a.usd.toLocaleString() : "&nbsp;"}</div>
       </div>
     </div>`;
   });
