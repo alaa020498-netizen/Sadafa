@@ -199,7 +199,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
     </button>
     <button class="nav-tab" onclick="show('sched')" id="tab-sched">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Tomorrow
+      Sched
     </button>
     <button class="nav-tab" onclick="show('manage')" id="tab-manage">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -312,8 +312,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.45)}
 
 <!-- SCHEDULE SCREEN -->
 <div class="screen" id="screen-sched">
-  <p class="page-title">Tomorrow</p>
+  <p class="page-title">Schedule</p>
   <p class="page-sub" id="sched-label"></p>
+  <div class="form-group">
+    <label class="form-label">Date</label>
+    <input class="form-input" type="date" id="sched-date" oninput="loadSched()">
+  </div>
+  <div class="btn-grid-2" style="margin-bottom:14px">
+    <button class="pick-btn" onclick="schedQuick(0)">Today</button>
+    <button class="pick-btn" onclick="schedQuick(1)">Tomorrow</button>
+  </div>
   <button class="refresh-btn" onclick="loadSched()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
     Refresh
@@ -612,7 +620,7 @@ function show(name) {
   document.getElementById("screen-" + name).classList.add("active");
   document.getElementById("tab-" + name).classList.add("active");
   if (name === "avail")  initAvail();
-  if (name === "sched")  loadSched();
+  if (name === "sched")  initSched();
   if (name === "manage") show_manage();
   if (name === "brief")  loadBrief();
   if (name === "hist")   loadHist();
@@ -1062,18 +1070,37 @@ function renderRank(){
   document.getElementById("rank-body").innerHTML = h;
 }
 
+function initSched() {
+  if (!document.getElementById("sched-date").value) {
+    const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+    document.getElementById("sched-date").value = fmt(tmr);
+  }
+  loadSched();
+}
+
+function schedQuick(offset) {
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  document.getElementById("sched-date").value = fmt(d);
+  loadSched();
+}
+
 async function loadSched() {
+  const selStr = document.getElementById("sched-date").value;
+  if (!selStr) return;
+  const selDate = new Date(selStr + "T00:00:00");
+  const todayStr = fmt(new Date());
+  const rel = selStr === todayStr ? "Today · " : selStr === fmt(new Date(Date.now() + 86400000)) ? "Tomorrow · " : "";
+  document.getElementById("sched-label").textContent =
+    rel + selDate.toLocaleDateString("en-US", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
   document.getElementById("sched-body").innerHTML =
     '<div class="spin"></div><p style="text-align:center;color:var(--muted);font-size:13px">Loading…</p>';
-  const tmr = new Date(); tmr.setDate(tmr.getDate()+1);
-  const tmrStr = fmt(tmr);
   const checkins=[], checkouts=[], errors=[];
 
   await Promise.all(Object.entries(MONTH_DBS).map(async ([month, dbId]) => {
     try {
       const [ri, ro] = await Promise.all([
-        notionQuery(dbId,{filter:{property:"Check-in Date",date:{equals:tmrStr}},page_size:100}),
-        notionQuery(dbId,{filter:{property:"Check-out Date",date:{equals:tmrStr}},page_size:100}),
+        notionQuery(dbId,{filter:{property:"Check-in Date",date:{equals:selStr}},page_size:100}),
+        notionQuery(dbId,{filter:{property:"Check-out Date",date:{equals:selStr}},page_size:100}),
       ]);
       (ri.results||[]).forEach(p => {
         const pr=p.properties||{};
@@ -1090,16 +1117,16 @@ async function loadSched() {
   if (errors.length) h+=`<div class="warn-box">⚠ ${errors.join("<br>")}</div>`;
   h+=`<div class="sec-label"><div class="sdot sdot-in"></div><span style="color:var(--in)">Check-ins</span><span class="cnt-badge">${checkins.length}</span></div>`;
   if (!checkins.length) {
-    h+='<div class="empty-state"><span class="empty-icon">😌</span>No check-ins tomorrow</div>';
+    h+='<div class="empty-state"><span class="empty-icon">😌</span>No check-ins on this date</div>';
   } else {
     checkins.forEach(r => {
-      const n=r.checkout?Math.round((new Date(r.checkout)-new Date(tmrStr))/86400000):"?";
+      const n=r.checkout?Math.round((new Date(r.checkout)-new Date(selStr))/86400000):"?";
       h+=`<div class="res-card in"><div class="card-unit">${r.unit}</div><div class="card-guest">${r.guest||"—"}</div><div class="card-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>${n} night${n!==1?"s":""} · out ${r.checkout?fmtD(r.checkout):"?"}</div></div>`;
     });
   }
   h+=`<div class="sec-label" style="margin-top:20px"><div class="sdot sdot-out"></div><span style="color:var(--out)">Check-outs</span><span class="cnt-badge">${checkouts.length}</span></div>`;
   if (!checkouts.length) {
-    h+='<div class="empty-state"><span class="empty-icon">😌</span>No check-outs tomorrow</div>';
+    h+='<div class="empty-state"><span class="empty-icon">😌</span>No check-outs on this date</div>';
   } else {
     checkouts.forEach(r => {
       h+=`<div class="res-card out"><div class="card-unit">${r.unit}</div><div class="card-guest">${r.guest||"—"}</div><div class="card-meta">Checked in ${r.checkin?fmtD(r.checkin):"?"}</div></div>`;
@@ -1693,7 +1720,7 @@ function toast(msg,type){
   document.getElementById("nav-date").textContent=today.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
   nightsCalc();
   const t=new Date(); t.setDate(t.getDate()+1);
-  document.getElementById("sched-label").textContent=t.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  document.getElementById("sched-date").value=fmt(t);
   const units=await fetchUnits();
   populateUnits(units);
 })();
